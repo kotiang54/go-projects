@@ -25,7 +25,7 @@ func main() {
 		}
 	}
 
-	rows := 5
+	rows := 6
 
 	// Outer loop
 	for i := 1; i <= rows; i++ {
@@ -40,4 +40,10 @@ func main() {
 		}
 		fmt.Println()
 	}
+
+	for i := range 10 {
+		i++
+		fmt.Println(i)
+	}
+	fmt.Println("We have a lift off!")
 }
