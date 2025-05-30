@@ -1,4 +1,4 @@
-package main
+package basics
 
 import (
 	"fmt"
@@ -36,7 +36,7 @@ func main() {
 		fmt.Println(i, ":", v)
 	}
 
-	// Access a slice
+	// Access a slice element
 	fmt.Println("Element at index 3 is", slice_copy[3])
 
 	// modify a slice value
@@ -49,4 +49,25 @@ func main() {
 		fmt.Println("slice1 is not equal slice_copy!")
 	}
 
+	// Multidimensional slice
+	two_D_slice := make([][]int, 3)
+	counter := 0
+
+	for i := 0; i < 3; i++ {
+		two_D_slice[i] = make([]int, 3)
+		for j := 0; j < 3; j++ {
+			two_D_slice[i][j] = counter
+			counter++
+		}
+	}
+
+	fmt.Println(two_D_slice)
+
+	// Length and capacity of a slice
+	slice2 := slice1[2:4]
+	fmt.Println("Slice1: ", slice1)
+	fmt.Println("Slice2: ", slice2)
+
+	fmt.Println("The capacity of slice2 is", cap(slice2))
+	fmt.Println("The length of slice2 is", len(slice2))
 }
