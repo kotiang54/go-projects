@@ -10,8 +10,42 @@ func main() {
 
 	sum := add(1, 2)
 	fmt.Println("Sum total", sum)
+	fmt.Println("Sum total", add(3, 4))
+
+	// Anonymous functions / closures / function literals:
+	// functions defined without a name directly inline where they are used
+	greet := func() {
+		fmt.Println("Hello Anonymous Function")
+	}
+	greet()
+
+	// function as types
+	operation := add
+	result := operation(3, 5)
+	fmt.Println(result)
+
+	// first-class citizen/object
+	// 1: pass a function as an argument
+	result = applyOperation(5, 5, add)
+	fmt.Println("5 + 5 =", result)
+
+	// 2: return and use a function
+	multiplyBy2 := createMultiplier(2)
+	fmt.Println("6 x 2 =", multiplyBy2(6))
 }
 
 func add(a, b int) int {
 	return a + b
+}
+
+// Function that takes a function as an argument
+func applyOperation(x, y int, operation func(int, int) int) int {
+	return operation(x, y)
+}
+
+// Function that returns a function
+func createMultiplier(factor int) func(int) int {
+	return func(x int) int {
+		return x * factor
+	}
 }
