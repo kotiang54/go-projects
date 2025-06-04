@@ -1,17 +1,33 @@
-package main
+package intermediate
 
 import "fmt"
 
 func main() {
 	/*
-		Closures are function variables that access values outside their body.
-		Persistent state in closures
+		A closure in Go is a function value that references variables from outside its body.
+		Useful in Go to maintain state across function calls
 	*/
 	sequence := adder()
 
 	fmt.Println(sequence())
 	fmt.Println(sequence())
 	fmt.Println(sequence())
+
+	// Anonymous function
+	subtracter := func() func(int) int {
+		count_down := 99
+		return func(x int) int {
+			count_down -= x
+			return count_down
+		}
+	}()
+
+	// Using the closure subtracter
+	fmt.Println(subtracter(1))
+	fmt.Println(subtracter(2))
+	fmt.Println(subtracter(3))
+	fmt.Println(subtracter(5))
+	fmt.Println(subtracter(7))
 }
 
 // Function returning a function
