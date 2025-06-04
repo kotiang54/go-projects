@@ -6,16 +6,17 @@ import (
 )
 
 func main() {
-	// func functionName(parameters list) returnType {
-	// Code block
-	// return value
-	// }
+	/* func functionName(parameters list) returnType {
+		  // Code block
+		  return value
+	   }
 
-	// functions with multiple return types
-	// func functionName(parameter1 type1, parameter2 type2, ...) (returnType1, returnType2, ...) { .
-	// Code block
-	// return value1, value2
-	// }
+		// functions with multiple return types
+		func functionName(parameter1 type1, parameter2 type2, ...) (returnType1, returnType2, ...) { .
+			//Code block
+			return value1, value2
+		}
+	*/
 
 	sum := add(1, 2)
 	fmt.Println("Sum total", sum)

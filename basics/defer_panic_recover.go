@@ -18,7 +18,7 @@ func main() {
 }
 
 func process_defer(i int) {
-	/* The deferred function is will be deferred till the end of the surrounding
+	/* The deferred function will be deferred till the end of the surrounding
 	   functions have executed.
 	   Multiple defer statements are executed in LIFO manner
 	*/
