@@ -4,9 +4,9 @@ import "fmt"
 
 func main() {
 	/*	... Ellipsis
-			func functionName(param1 type1, param2 type2, param3 ... type3) returnType {
-		 		functionBody
-			}
+		func functionName(param1 type1, param2 type2, param3 ... type3) returnType {
+			functionBody
+		}
 	*/
 
 	// NOTE: Place the variadic parameters at the tail of the function input arguments

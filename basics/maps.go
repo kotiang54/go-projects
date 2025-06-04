@@ -11,8 +11,8 @@ func main() {
 
 		using a Map literal
 		mapVariable := map[keyType]valueType{
-		key1: value1,
-		key2: value2,
+			key1: value1,
+			key2: value2,
 		}
 	*/
 
