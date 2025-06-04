@@ -5,6 +5,16 @@ import (
 	"os"
 )
 
+func init() {
+	/* Practical use cases
+	* setup tasks
+	* configuration
+	* registering components
+	* database initialization
+	 */
+	fmt.Println("Initializing package1...")
+}
+
 func main() {
 
 	// os.Exit() exits control flow without perfoming any cleanup operations
