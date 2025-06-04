@@ -6,14 +6,15 @@ import (
 )
 
 func main() {
-	// var mapVariable map[keyType]valueType
-	// mapVariable := make(map[keyType]valueType)
+	/*	var mapVariable map[keyType]valueType
+		mapVariable := make(map[keyType]valueType)
 
-	// using a Map literal
-	// mapVariable := map[keyType]valueType{
-	// 	key1: value1,
-	// 	key2: value2,
-	// }
+		using a Map literal
+		mapVariable := map[keyType]valueType{
+		key1: value1,
+		key2: value2,
+		}
+	*/
 
 	myMap := make(map[string]int)
 	fmt.Println(myMap)
