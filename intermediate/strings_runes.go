@@ -1,4 +1,4 @@
-package main
+package intermediate
 
 import (
 	"fmt"
@@ -29,14 +29,17 @@ func main() {
 		fmt.Printf(" Character at index %d is %c\n", i, char)
 	}
 
-	// runes are integer value representing a character in Go
 	fmt.Println("The first character in message var is", message[0])         // returns ASCII UTF-8 value
 	fmt.Println("The first character in message var is", string(message[0])) // returns string character
 
 	fmt.Println("Runes count", utf8.RuneCountInString(message))
 
-	// Runes - int32 unicode code point: represent individual character in a string
-	var ch rune = 'a' // declared using single quotes
+	/* Runes - int32 unicode code point: represent individual character in a string
+	    - runes are integer value representing a character in Go
+		- declared using single quotes
+		- handle unicode character useful for multiple languages
+	*/
+	var ch rune = 'a'
 	var jch rune = '日'
 
 	// Print ASCII value
@@ -50,4 +53,9 @@ func main() {
 	// OR
 	fmt.Println(string(ch))
 	fmt.Printf("Type of the character %T\n", string(ch))
+
+	jhello := "こんにちは" // Japanese "Hello"
+	for _, runeValue := range jhello {
+		fmt.Printf("%c\n", runeValue)
+	}
 }
