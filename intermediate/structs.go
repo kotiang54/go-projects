@@ -4,11 +4,11 @@ import "fmt"
 
 // Structs are usually defined outside of main function - global scoping
 type Person struct {
-	firstName string
-	lastName  string
-	age       int
-	address   Address // embedding concept
-	PhoneHomeCell
+	firstName     string
+	lastName      string
+	age           int
+	address       Address // embedding concept
+	PhoneHomeCell         // anonymous embedded field
 }
 
 type PhoneHomeCell struct {
@@ -47,7 +47,7 @@ func main() {
 			city:    "London",
 			country: "UK",
 		},
-		phoneHomeCell: PhoneHomeCell{
+		PhoneHomeCell: PhoneHomeCell{
 			home: "2349873543",
 			cell: "3168738270",
 		},
@@ -62,8 +62,12 @@ func main() {
 
 	// Accessing the struct fields using dot notation
 	fmt.Printf("Person #1 firstname: %s, lastname: %s, age: %d\n", p1.firstName, p1.lastName, p1.age)
-	fmt.Printf("Person #2 firstname: %s, lastname: %s, age: %d\n", p2.firstName, p2.lastName, p2.age)
 	fmt.Printf("Person #1 home city: %s\n", p1.address.city)
+
+	// Direct access to anonymous fields of struct
+	fmt.Printf("Person #1 cell phone: %s\n", p1.cell)
+
+	fmt.Printf("Person #2 firstname: %s, lastname: %s, age: %d\n", p2.firstName, p2.lastName, p2.age)
 	fmt.Printf("Person #2 home country: %s\n", p2.address.country)
 
 	// Method calls
