@@ -8,7 +8,7 @@ import (
 //const pi float64 = 3.142
 
 /*
-// Interfaces promotes code reuse, decoupling, and polymorphism
+// Interface promotes code reuse, decoupling, and polymorphism
 // without relying in inheritance
 */
 type geometry interface {
