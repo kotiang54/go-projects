@@ -1,0 +1,31 @@
+package main
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+func main() {
+	str := "Hello Go!"
+	fmt.Println(len(str))
+
+	str1 := "Hello"
+	str2 := "World"
+	res := str1 + " " + str2
+
+	fmt.Println(res)
+	fmt.Println(str[0])
+	fmt.Println(str[1:7])
+
+	// String conversion
+	num := 18
+	str3 := strconv.Itoa(num)
+	fmt.Println(len(str3))
+
+	// String splitting
+	fruits := "apple, orange, banana"
+	parts := strings.Split(fruits, ",")
+	fmt.Println(fruits)
+	fmt.Println(parts)
+}
