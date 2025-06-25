@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 func main() {
@@ -48,4 +50,43 @@ func main() {
 	// ToUpper() and ToLower()
 	fmt.Println(strings.ToLower(strwspace))
 	fmt.Println(strings.ToUpper(strwspace))
+
+	// repeat function
+	fmt.Println(strings.Repeat("foo ", 3))
+
+	// Count substring, char in a string
+	fmt.Println(strings.Count("Hello World!", "l"))
+
+	// Advanced techniques - regular expressions
+	str5 := "Hello, 123, Go! 11 743"
+	re := regexp.MustCompile(`\d+`)
+	matches := re.FindAllString(str5, -1) // -1 return all occurance of matches
+	fmt.Println(matches)
+
+	str6 := "Hello, こんにちは"
+	fmt.Println(utf8.RuneCountInString(str6))
+
+	// strings.Builder
+	var builder strings.Builder
+
+	builder.WriteString("Hello")
+	builder.WriteString(", ")
+	builder.WriteString("World!")
+
+	// convert builder to  a string
+	result := builder.String()
+	fmt.Println(result)
+
+	// Using Writerune to add a character
+	builder.WriteRune(' ')
+	builder.WriteString("How are you!")
+
+	result = builder.String()
+	fmt.Println(result)
+
+	// Reset the builder
+	builder.Reset()
+	builder.WriteString("Starting a fresh")
+	result = builder.String()
+	fmt.Println(result)
 }
