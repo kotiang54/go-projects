@@ -37,4 +37,24 @@ func main() {
 	fmt.Println(submatches[1])
 	fmt.Println(submatches[2])
 	fmt.Println(submatches[3])
+
+	// Replace characters in Source string
+	str := "Hello World"
+
+	re = regexp.MustCompile(`[aeiou]`)
+	result := re.ReplaceAllString(str, "*")
+	fmt.Println(result)
+
+	// Flags and Options
+	// i - case insensitive
+	// m - multi line model
+	// s - dot matches all
+
+	re = regexp.MustCompile(`(?i)go`)
+
+	// Test string
+	text := "Golang is going great"
+
+	// Match
+	fmt.Println("Match:", re.MatchString(text))
 }
