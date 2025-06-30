@@ -31,8 +31,8 @@ func main() {
 	fmt.Println("Parsed Float:", floatVal)
 
 	// advanced usage
-	binaryStr := "10101"
-	decimal, err := strconv.ParseInt(binaryStr, 2, 64)
+	binaryStr := "1010"
+	decimal, err := strconv.ParseInt(binaryStr, 2, 8)
 	if err != nil {
 		fmt.Println("Error parsing binary value:", err)
 		return
