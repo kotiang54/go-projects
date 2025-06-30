@@ -1,4 +1,4 @@
-package main
+package intermediate
 
 import (
 	"fmt"
@@ -29,4 +29,21 @@ func main() {
 		fmt.Println("Error parsing value:", err)
 	}
 	fmt.Println("Parsed Float:", floatVal)
+
+	// advanced usage
+	binaryStr := "10101"
+	decimal, err := strconv.ParseInt(binaryStr, 2, 64)
+	if err != nil {
+		fmt.Println("Error parsing binary value:", err)
+		return
+	}
+	fmt.Println("Parsed binary to decimal:", decimal)
+
+	hexStr := "FF"
+	decimal, err = strconv.ParseInt(hexStr, 16, 64)
+	if err != nil {
+		fmt.Println("Error parsing hexadecimal value:", err)
+		return
+	}
+	fmt.Println("Parsed hexadecimal to decimal:", decimal)
 }
