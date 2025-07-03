@@ -1,4 +1,4 @@
-package main
+package intermediate
 
 import (
 	"bufio"
@@ -12,7 +12,7 @@ func main() {
 
 	// Reading byte slice
 	// Read data upto a certain limit
-	data := make([]byte, 20)
+	data := make([]byte, 15)
 	n, err := reader.Read(data)
 	if err != nil {
 		fmt.Println("Error reading:", err)
