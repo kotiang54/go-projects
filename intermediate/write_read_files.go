@@ -1,4 +1,4 @@
-package main
+package intermediate
 
 import (
 	"bufio"
@@ -66,7 +66,7 @@ func main() {
 	}
 	fmt.Println("File content:", string(data))
 
-	// make use of buffio package
+	// make use of buffio package - Scanner
 	scanner := bufio.NewScanner(inFile)
 
 	// Read line-by-line
