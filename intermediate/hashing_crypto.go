@@ -1,4 +1,4 @@
-package main
+package intermediate
 
 import (
 	"crypto/rand"
