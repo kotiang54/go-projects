@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -12,6 +14,24 @@ func main() {
 		return
 	}
 	defer file.Close()
-
 	fmt.Println("File opened successfully!")
+
+	scanner := bufio.NewScanner(file)
+
+	// Keyword to filter lines
+	keyword := "important"
+
+	// Read and filter lines
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, keyword) {
+			fmt.Println("Filtered line: ", line)
+		}
+	}
+
+	err = scanner.Err()
+	if err != nil {
+		fmt.Println("Error scanning file:", err)
+	}
+
 }
