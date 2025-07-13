@@ -4,7 +4,7 @@ Another important piece of data.
 This is going to be important.
 
 
-please finish this, this is importatnt.
+Please finish this, this is important.
 
 Go is an important language to learn in this era.
 

@@ -1,4 +1,4 @@
-package main
+package intermediate
 
 import (
 	"bufio"
@@ -25,7 +25,9 @@ func main() {
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, keyword) {
+			updatedLine := strings.ReplaceAll(line, keyword, "necessary")
 			fmt.Println("Filtered line: ", line)
+			fmt.Println("Updated line: ", updatedLine)
 		}
 	}
 
