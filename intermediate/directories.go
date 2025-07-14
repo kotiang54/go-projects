@@ -1,11 +1,14 @@
-package main
+package intermediate
 
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 func main() {
+	// Using os package
+
 	err := os.Mkdir("subdir1", 0755)
 	checkError(err)
 	// defer os.RemoveAll("subdir1")
@@ -45,6 +48,21 @@ func main() {
 	dir, err := os.Getwd()
 	checkError(err)
 	fmt.Println(dir)
+
+	// Using filepath package
+	// filepath.Walk and filepath.WalkDir-(preferred due to performance)
+	pathfile := "subdir1/parent/child"
+	fmt.Println("")
+
+	err = filepath.WalkDir(pathfile, func(path string, d os.DirEntry, err error) error {
+		checkError(err)
+		fmt.Println(path)
+		return nil
+	})
+	checkError(err)
+
+	// ros.RemoveAll()
+	checkError(os.RemoveAll("subdir1"))
 }
 
 func checkError(err error) {
