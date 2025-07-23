@@ -1,0 +1,2 @@
+DEBUG: 2025/07/22 23:19:02 /home/jasakwa54/Dropbox/MOOCs/Udemy/Go Projects/go-projects/intermediate/logging/logging.go:32: This is a debug message logged to a file
+DEBUG: 2025/07/22 23:20:32 logging.go:32: This is a debug message logged to a file

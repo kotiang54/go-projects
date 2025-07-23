@@ -20,6 +20,17 @@ func main() {
 	infoLogger.Println("This is an info message with custom logger")
 	warnLogger.Println("This is a warning message with custom logger")
 	errorLogger.Println("This is an error message with custom logger")
+
+	// log to a file
+	file, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Error opening log file: %v", err)
+	}
+	defer file.Close()
+
+	debugLogger := log.New(file, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
+	debugLogger.Println("This is a debug message logged to a file")
+
 }
 
 // Custom log output
