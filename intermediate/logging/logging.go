@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -30,6 +32,25 @@ func main() {
 
 	debugLogger := log.New(file, "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
 	debugLogger.Println("This is a debug message logged to a file")
+
+	// 3rd party logging library example - e.g., logrus
+	log := logrus.New()
+
+	// Set log level
+	log.SetLevel(logrus.InfoLevel)
+
+	// Set log format
+	log.SetFormatter(&logrus.JSONFormatter{})
+
+	// Log messages with different levels
+	log.Info("This is an info message.")
+	log.Warn("This is a warning message.")
+	log.Error("This is an error message.")
+
+	log.WithFields(logrus.Fields{
+		"username": "John Doe",
+		"method":   "GET",
+	}).Info("User logged in.")
 
 }
 
