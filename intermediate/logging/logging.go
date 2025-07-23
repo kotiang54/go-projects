@@ -7,6 +7,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// main demonstrates various logging techniques in Go, including:
+// - Using the standard log package for basic logging with custom prefixes and flags.
+// - Creating custom loggers for different log levels (info, warning, error).
+// - Logging messages to a file using a custom logger.
+// - Utilizing a third-party logging library (logrus) for structured logging, setting log levels and formats, and logging messages with additional fields.
 func main() {
 
 	log.Println("This is a log message")
@@ -34,24 +39,26 @@ func main() {
 	debugLogger.Println("This is a debug message logged to a file")
 
 	// 3rd party logging library example - e.g., logrus
-	log := logrus.New()
+	logrusLogger := logrus.New()
 
 	// Set log level
-	log.SetLevel(logrus.InfoLevel)
+	logrusLogger.SetLevel(logrus.InfoLevel)
 
 	// Set log format
-	log.SetFormatter(&logrus.JSONFormatter{})
+	logrusLogger.SetFormatter(&logrus.JSONFormatter{})
 
 	// Log messages with different levels
-	log.Info("This is an info message.")
-	log.Warn("This is a warning message.")
-	log.Error("This is an error message.")
+	logrusLogger.Info("This is an info message.")
+	logrusLogger.Warn("This is a warning message.")
+	logrusLogger.Error("This is an error message.")
 
-	log.WithFields(logrus.Fields{
-		"username": "John Doe",
-		"method":   "GET",
+	// Adding structured fields for logging:
+	// - "username": Represents the name of the user performing the action.
+	// - "method": Represents the HTTP method used in the request.
+	logrusLogger.WithFields(logrus.Fields{
+		"username": "John Doe", // User's name
+		"method":   "GET",      // HTTP method
 	}).Info("User logged in.")
-
 }
 
 // Custom log output
