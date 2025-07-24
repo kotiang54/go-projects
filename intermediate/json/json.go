@@ -9,12 +9,20 @@ type Person struct {
 	Name    string  `json:"name"`
 	Age     int     `json:"age,omitempty"`
 	Email   string  `json:"email"`
-	Address Address `json:"address,omitempty"`
+	Address Address `json:"address"` // named struct embedding
 }
 
 type Address struct {
 	City  string `json:"city"`
 	State string `json:"state"`
+}
+
+type Employee struct {
+	FullName string           `json:"full_name"`
+	Age      int              `json:"age,omitempty"`
+	EmpID    string           `json:"emp_id"`
+	Email    string           `json:"email"`
+	Address  `json:"address"` // anonymous struct embedding
 }
 
 func main() {
@@ -48,4 +56,19 @@ func main() {
 		return
 	}
 	fmt.Println("JSON data:", string(jsonData1))
+
+	// Decode or unMarshal JSON back to a Person struct
+	jsonData2 := `{"full_name": "Alice Johnson", "age": 28, "emp_id": "0007", "email": "alice.johnson@company.com", "address": {"city": "Los Angeles", "state": "CA"}}`
+
+	var employeeFromJSON Employee
+	// Unmarshal the JSON string into the Employee struct
+	err = json.Unmarshal([]byte(jsonData2), &employeeFromJSON)
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON to Employee struct:", err)
+		return
+	}
+	fmt.Println("Employee struct from JSON:", employeeFromJSON)
+
+	fmt.Println("Jane's age increased by 5 years:", employeeFromJSON.Age+5)
+	fmt.Println("Jane's city:", employeeFromJSON.City)
 }
