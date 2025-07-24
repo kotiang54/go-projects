@@ -71,4 +71,31 @@ func main() {
 
 	fmt.Println("Jane's age increased by 5 years:", employeeFromJSON.Age+5)
 	fmt.Println("Jane's city:", employeeFromJSON.City)
+
+	// Decoding arrays
+	cityStateList := []Address{
+		{City: "San Francisco", State: "CA"},
+		{City: "Austin", State: "TX"},
+		{City: "Seattle", State: "WA"},
+		{City: "Miami", State: "FL"},
+	}
+
+	fmt.Println("List of City and State:", cityStateList)
+	jsonList, err := json.Marshal(cityStateList)
+	if err != nil {
+		fmt.Println("Error marshalling list of cities to JSON:", err)
+		return
+	}
+	fmt.Println("JSON data:", string(jsonList))
+
+	// Handling unknown json structures
+	jsonData3 := `{"name": "Bob", "age": 35, "email": "bob@example.com", "address": {"city": "Chicago", "state": "IL"}}`
+	var data map[string]interface{}
+
+	err = json.Unmarshal([]byte(jsonData3), &data)
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+		return
+	}
+	fmt.Println("Decoded JSON data:", data)
 }
