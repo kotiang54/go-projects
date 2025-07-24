@@ -1,3 +1,13 @@
+// Package main demonstrates JSON encoding and decoding in Go using structs with named and anonymous embedding.
+// It defines Person, Address, and Employee types with appropriate JSON struct tags, and shows how to marshal and unmarshal
+// these types to and from JSON. The program also illustrates handling arrays of structs and decoding unknown JSON structures
+// into a map[string]interface{}. Key features include:
+//   - Named struct embedding in Person for Address.
+//   - Anonymous struct embedding in Employee for Address.
+//   - Use of `omitempty` to skip zero-value fields during marshaling.
+//   - Marshaling structs and slices to JSON.
+//   - Unmarshaling JSON strings into structs and generic maps.
+//   - Accessing embedded struct fields directly from the parent struct.
 package main
 
 import (
