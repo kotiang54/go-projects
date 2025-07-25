@@ -13,13 +13,16 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type Person struct {
-	Name    string  `json:"name"`
-	Age     int     `json:"age,omitempty"`
-	Email   string  `json:"email"`
-	Address Address `json:"address"` // named struct embedding
+	FirstName string  `json:"first_name" validate:"required"`
+	LastName  string  `json:"last_name,omitempty"`
+	Age       int     `json:"age" validate:"gte=0,lte=120"`
+	Email     string  `json:"email"`
+	Address   Address `json:"address"` // named struct embedding
 }
 
 type Address struct {
@@ -38,7 +41,8 @@ type Employee struct {
 func main() {
 
 	person := Person{
-		Name: "John Doe",
+		FirstName: "John",
+		LastName:  "Doe",
 		// Age:   30,
 		Email: "john.doe@example.com",
 	}
@@ -53,10 +57,22 @@ func main() {
 
 	// Example of another person with all fields filled
 	person1 := Person{
-		Name:    "Jane Smith",
-		Age:     25,
-		Email:   "jane.smith@example.com",
-		Address: Address{City: "New York", State: "NY"},
+		FirstName: "Jane",
+		LastName:  "Smith",
+		Age:       130,
+		Email:     "jane.smith@example.com",
+		Address:   Address{City: "New York", State: "NY"},
+	}
+
+	validate := validator.New()
+
+	err = validate.Struct(person1)
+	if err != nil {
+		// Validation failed
+		for _, err := range err.(validator.ValidationErrors) {
+			fmt.Printf("Field '%s' failed validation: %s\n", err.Field(), err.Tag())
+		}
+		return
 	}
 
 	// Marshal the second person to JSON
@@ -79,7 +95,11 @@ func main() {
 	}
 	fmt.Println("Employee struct from JSON:", employeeFromJSON)
 
-	fmt.Println("Jane's age increased by 5 years:", employeeFromJSON.Age+5)
+	if employeeFromJSON.Age > 0 {
+		fmt.Println("Jane's age increased by 5 years:", employeeFromJSON.Age+5)
+	} else {
+		fmt.Println("Age field is not valid or omitted.")
+	}
 	fmt.Println("Jane's city:", employeeFromJSON.City)
 
 	// Decoding arrays
@@ -107,5 +127,34 @@ func main() {
 		fmt.Println("Error unmarshalling JSON:", err)
 		return
 	}
+	// Print the decoded JSON data
 	fmt.Println("Decoded JSON data:", data)
+
+	// Example: Accessing specific fields in the map
+	if name, ok := data["name"].(string); ok {
+		fmt.Println("Name:", name)
+	} else {
+		fmt.Println("Name field is missing or not a string.")
+	}
+
+	if age, ok := data["age"].(float64); ok { // JSON numbers are unmarshalled as float64
+		fmt.Println("Age:", int(age))
+	} else {
+		fmt.Println("Age field is missing or not a number.")
+	}
+
+	if address, ok := data["address"].(map[string]interface{}); ok {
+		if city, ok := address["city"].(string); ok {
+			fmt.Println("City:", city)
+		} else {
+			fmt.Println("City field is missing or not a string.")
+		}
+		if state, ok := address["state"].(string); ok {
+			fmt.Println("State:", state)
+		} else {
+			fmt.Println("State field is missing or not a string.")
+		}
+	} else {
+		fmt.Println("Address field is missing or not a valid object.")
+	}
 }
