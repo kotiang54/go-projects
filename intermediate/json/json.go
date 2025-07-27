@@ -59,7 +59,7 @@ func main() {
 	person1 := Person{
 		FirstName: "Jane",
 		LastName:  "Smith",
-		Age:       130,
+		Age:       13,
 		Email:     "jane.smith@example.com",
 		Address:   Address{City: "New York", State: "NY"},
 	}
@@ -76,7 +76,7 @@ func main() {
 	}
 
 	// Marshal the second person to JSON
-	jsonData1, err := json.Marshal(person1)
+	jsonData1, err := json.MarshalIndent(person1, "", "  ")
 	if err != nil {
 		fmt.Println("Error marshalling person1 to JSON:", err)
 		return
