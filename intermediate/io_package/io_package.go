@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -50,6 +51,7 @@ func multiReaderExample() {
 	if err != nil {
 		log.Fatalln("Error reading from multi-reader:", err)
 	}
+	// and prints the received data. The function also ensures proper closure of the pipe resources.
 	fmt.Println(buf.String())
 }
 
@@ -59,16 +61,45 @@ func multiReaderExample() {
 func pipeExample() {
 	pr, pw := io.Pipe() // create a pipe
 	go func() {
-		pw.Write([]byte("Data sent through the pipe.\n"))
+		_, err := pw.Write([]byte("Data sent through the pipe.\n"))
+		if err != nil {
+			log.Println("Error writing to pipe:", err)
+		}
 		pw.Close()
 	}()
 
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(pr)
+	_, err := buf.ReadFrom(pr)
+	if err != nil {
+		log.Fatalln("Error reading from pipe:", err)
+	}
 	fmt.Println("Data received from pipe:", buf.String())
-	closeResource(pr)
-	closeResource(pw)
+	// No need to close pr and pw explicitly here; they are closed after use.
 	fmt.Println("Pipe closed successfully.")
+}
+
+// writeToFile writes the provided data string to the specified file path.
+// If the file does not exist, it is created with permissions 0644.
+func writeToFile(filepath string, data string) {
+	file, err := os.OpenFile(filepath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		log.Fatalln("Error opening file for writing:", err)
+	}
+	defer closeResource(file)
+
+	_, err = file.Write([]byte(data))
+	if err != nil {
+		log.Fatalln("Error opening/writing to file:", err)
+	}
+	fmt.Printf("Data written to file %s successfully.\n", filepath)
+
+	// //Type conversion to io.Writer
+	// writer := io.Writer(file)
+	// _, err = writer.Write([]byte(data))
+	// if err != nil {
+	// 	log.Fatalln("Error opening/writing to file:", err)
+	// }
+	// fmt.Printf("Data written to file %s successfully.\n", filepath)
 }
 
 func main() {
@@ -92,4 +123,7 @@ func main() {
 
 	fmt.Println("=== Pipe Example ===")
 	pipeExample()
+
+	filepath := "io.txt"
+	writeToFile(filepath, "Writing to a file using io.Writer interface.")
 }
