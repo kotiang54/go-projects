@@ -53,6 +53,24 @@ func multiReaderExample() {
 	fmt.Println(buf.String())
 }
 
+// pipeExample demonstrates the use of io.Pipe to create an in-memory pipe
+// for concurrent data transfer between a writer and a reader. It launches
+// a goroutine to write data to the pipe, reads the data from the pipe into a buffer,
+func pipeExample() {
+	pr, pw := io.Pipe() // create a pipe
+	go func() {
+		pw.Write([]byte("Data sent through the pipe.\n"))
+		pw.Close()
+	}()
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(pr)
+	fmt.Println("Data received from pipe:", buf.String())
+	closeResource(pr)
+	closeResource(pw)
+	fmt.Println("Pipe closed successfully.")
+}
+
 func main() {
 
 	fmt.Println("=== Read from Reader ===")
@@ -61,5 +79,17 @@ func main() {
 	fmt.Println("=== Write to Writer ===")
 	var writer bytes.Buffer
 	writeToWriter(&writer, "Writing to a bytes.Buffer using io.Writer interface.\n")
+	fmt.Println(writer.String())
 
+	fmt.Println("=== Buffer Example ===")
+	bufferExample()
+
+	fmt.Println("=== MultiReader Example ===")
+	multiReaderExample()
+
+	fmt.Println("=== Closing Resources ===")
+	fmt.Println("No resources to close for bytes.Buffer.")
+
+	fmt.Println("=== Pipe Example ===")
+	pipeExample()
 }
