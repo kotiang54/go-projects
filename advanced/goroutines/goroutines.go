@@ -6,7 +6,7 @@ import (
 )
 
 // Goroutines are lightweight threads managed by the Go runtime.
-// They allow concurrent execution of functions.
+// They allow concurrent execution of functions and are non-blocking.
 
 func main() {
 	var err error
