@@ -32,20 +32,25 @@ func main() {
 	bufferedChannel := make(chan int, 3)
 	bufferedChannel <- 1
 	bufferedChannel <- 2
-	// bufferedChannel <- 3
+	bufferedChannel <- 3
 	fmt.Println("Receiving from buffer!")
 
 	go func() {
 		fmt.Println("Goroutine 2 seconds timer started!")
-		time.Sleep((4 * time.Second))
+		time.Sleep(2 * time.Second)
+
 		// Receiving from the buffered channel
 		fmt.Println("Buffered Channel Values:", <-bufferedChannel)
 		fmt.Println("Buffered Channel Values:", <-bufferedChannel)
 	}()
 
 	fmt.Println("Blocking starts!")
-	bufferedChannel <- 4 // This will block if the buffer is full
-	// bufferedChannel <- 5
-	// bufferedChannel <- 6
-	fmt.Println("Buffered Channels!")
+	// Sending to the buffered channel will block here because the buffer is full.
+	// has time to process the data, preventing data loss or race conditions.
+	bufferedChannel <- 4
+	// Wait for the goroutine to consume values from the buffered channel
+	time.Sleep(5 * time.Second)
+	bufferedChannel <- 4
+	fmt.Println("Successfully sent value 4 to the buffered channel!")
+
 }
