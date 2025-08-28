@@ -5,13 +5,13 @@ import (
 	"time"
 )
 
-func main() {
+func unbuffered() {
 	// Correct syntax: channelName := make(chan valueType)
 	greeting := make(chan string)
 	greetString := "Hello, Channel!"
 
 	go func() {
-		greeting <- greetString
+		greeting <- greetString // blocking; continuously trying to receive values
 		for _, ch := range "abcde" {
 			greeting <- "Alphabet: " + string(ch)
 		}
