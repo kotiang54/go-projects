@@ -8,7 +8,7 @@ import (
 // Buffered channels allow sending and receiving values without blocking,
 // up to a specified capacity. They are useful for decoupling the sender and receiver.
 
-// func main() {
+// func bufferedChannels() {
 // 	// ************* Blocking on RECEIVE Only if buffer is empty **********
 // 	ch := make(chan int, 2)
 
@@ -25,7 +25,7 @@ import (
 // 	fmt.Println("End of program!")
 // }
 
-func main() {
+func bufferedChannels() {
 	// ************* Blocking on SEND Only if buffer is FULL ***************
 
 	// channelName := make(chan chanType, capacity) // Create a buffered channel with capacity 3
