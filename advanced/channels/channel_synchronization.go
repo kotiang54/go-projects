@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func main() {
+func synchronization() {
 
 	ch := make(chan int)
 
