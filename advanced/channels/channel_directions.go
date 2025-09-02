@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-func main() {
+func chan_directions() {
 
 	ch := make(chan int)
 
