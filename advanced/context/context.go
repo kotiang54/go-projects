@@ -22,6 +22,19 @@ func checkEvenOdd(ctx context.Context, num int) string {
 
 }
 
+func doWork(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("Work cancelled:", ctx.Err())
+			return
+		default:
+			fmt.Println("Working...")
+		}
+		time.Sleep(500 * time.Millisecond) // Simulate work
+	}
+}
+
 func main() {
 	// Using context.TODO and context.Background
 	// Both are empty contexts, but TODO is used when you are unsure which to use
@@ -57,4 +70,24 @@ func main() {
 	result = checkEvenOdd(ctx, 15)
 	fmt.Println("Result after timeout:", result)
 
+	fmt.Println("")
+
+	rootCtx := context.Background()
+	ctx, cancel = context.WithTimeout(rootCtx, 2*time.Second)
+	defer cancel()
+
+	ctx = context.WithValue(ctx, contextKey("requestID"), "Jhtgfsr7353425232")
+
+	go doWork(ctx)
+	time.Sleep(3 * time.Second) // Let the work run for a while
+
+	// After 2 seconds, the context will be cancelled due to the timeout
+	// The doWork function should print "Work cancelled: context deadline exceeded"
+	// The requestID should still be accessible
+	requestID := ctx.Value(contextKey("requestID"))
+	if requestID != nil {
+		fmt.Println("Request ID:", requestID)
+	} else {
+		fmt.Println("No Request ID found")
+	}
 }
