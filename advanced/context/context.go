@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -35,6 +36,14 @@ func doWork(ctx context.Context) {
 	}
 }
 
+func logWithContext(ctx context.Context, message string) {
+	if requestID, ok := ctx.Value(contextKey("requestID")).(string); ok {
+		log.Printf("Request ID: %s - %s\n", requestID, message)
+	} else {
+		log.Println("No Request ID found in context")
+	}
+}
+
 func main() {
 	// Using context.TODO and context.Background
 	// Both are empty contexts, but TODO is used when you are unsure which to use
@@ -53,7 +62,7 @@ func main() {
 
 	fmt.Println("")
 
-	// Using context with a function
+	// Using context with a
 	ctx = context.TODO()
 	result := checkEvenOdd(ctx, 5)
 	fmt.Println("Result with context.TODO():", result)
@@ -104,4 +113,7 @@ func main() {
 	} else {
 		fmt.Println("No Request ID found")
 	}
+
+	// Logging with context
+	logWithContext(ctx, "This is a log message with context")
 }
