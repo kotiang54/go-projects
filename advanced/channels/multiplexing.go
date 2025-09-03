@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func main() {
+func multiplexing() {
 
 	ch1 := make(chan string)
 	ch2 := make(chan string)
