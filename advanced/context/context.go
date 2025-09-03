@@ -65,6 +65,7 @@ func main() {
 	fmt.Println("Result with context.WithTimeout():", result)
 
 	time.Sleep(3 * time.Second) // Simulate a delay to trigger the timeout
+
 	// Check the result after the timeout
 	// The context will be done, and the function should return "Operation cancelled"
 	result = checkEvenOdd(ctx, 15)
@@ -73,11 +74,24 @@ func main() {
 	fmt.Println("")
 
 	rootCtx := context.Background()
-	ctx, cancel = context.WithTimeout(rootCtx, 2*time.Second)
-	defer cancel()
+	// Create a context with a timeout of 2 seconds
+	// This context will be automatically cancelled after 2 seconds
+	// Uncomment the following lines to use a timeout instead of manual cancellation
+
+	// ctx, cancel = context.WithTimeout(rootCtx, 2*time.Second)
+	// defer cancel()
+
+	// Manually cancel the context (if not already cancelled)
+	ctx, cancel = context.WithCancel(rootCtx)
+
+	go func() {
+		time.Sleep(2 * time.Second) // simulate heavy time consuming operation
+		cancel()                    // manually cancel the context
+	}()
 
 	ctx = context.WithValue(ctx, contextKey("requestID"), "Jhtgfsr7353425232")
 
+	// Start a goroutine that does some work
 	go doWork(ctx)
 	time.Sleep(3 * time.Second) // Let the work run for a while
 
