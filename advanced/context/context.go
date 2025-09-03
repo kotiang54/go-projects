@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 type contextKey string
@@ -33,7 +34,27 @@ func main() {
 	fmt.Println(ctx)
 	fmt.Println(ctx.Value(contextKey("fullname")))
 
-	ctx1 := context.WithValue(contextBkg, contextKey("city"), "New York")
-	fmt.Println(ctx1)
-	fmt.Println(ctx1.Value(contextKey("city")))
+	ctx = context.WithValue(contextBkg, contextKey("city"), "New York")
+	fmt.Println(ctx)
+	fmt.Println(ctx.Value(contextKey("city")))
+
+	fmt.Println("")
+
+	// Using context with a function
+	ctx = context.TODO()
+	result := checkEvenOdd(ctx, 5)
+	fmt.Println("Result with context.TODO():", result)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	result = checkEvenOdd(ctx, 10)
+	fmt.Println("Result with context.WithTimeout():", result)
+
+	time.Sleep(3 * time.Second) // Simulate a delay to trigger the timeout
+	// Check the result after the timeout
+	// The context will be done, and the function should return "Operation cancelled"
+	result = checkEvenOdd(ctx, 15)
+	fmt.Println("Result after timeout:", result)
+
 }
