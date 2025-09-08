@@ -29,6 +29,8 @@ func main() {
 	<-timer.C // blocking in nature. Blocks until the timer expires
 	fmt.Println("Timer expired")
 
+	fmt.Println("")
+
 	// implement timeout using select statement
 	timeout := time.After(2 * time.Second)
 	done := make(chan bool)
@@ -44,4 +46,19 @@ func main() {
 	case <-done:
 		fmt.Println("Operation completed")
 	}
+
+	fmt.Println("")
+
+	// Schedule delayed operation
+	timer = time.NewTimer(2 * time.Second)
+
+	go func() {
+		<-timer.C
+		fmt.Println("2 seconds passed. Delayed operation executed")
+	}()
+
+	fmt.Println("Waiting ...")
+	time.Sleep(3 * time.Second)
+	fmt.Println("Exiting app...")
+	timer.Stop()
 }
