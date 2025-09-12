@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Multiplexing with select
 func multiplexing() {
 
 	ch1 := make(chan string)
@@ -20,7 +21,7 @@ func multiplexing() {
 		ch2 <- "Message from ch2"
 	}()
 
-	for range 2 {
+	for i := 0; i < 2; i++ {
 		select {
 		case msg := <-ch1:
 			fmt.Println("Received from ch1:", msg)
@@ -41,15 +42,10 @@ func multiplexing() {
 		close(ch)
 	}()
 
-	for {
-		select {
-		case msg, ok := <-ch:
-			if !ok {
-				fmt.Println("Channel closed!")
-				// clean up resources if needed
-				return
-			}
-			fmt.Println("Received:", msg)
-		}
+	for msg := range ch {
+		fmt.Println("Received from channel:", msg)
 	}
+	fmt.Println("Channel closed!")
+	// clean up resources if needed
+	// No additional cleanup required as the channel is already closed
 }
