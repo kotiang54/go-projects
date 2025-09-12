@@ -15,7 +15,7 @@ func worker(id int, tasks <-chan int, results chan<- int) {
 	}
 }
 
-func main() {
+func main_worker_pool() {
 	// Tasks, Workers, Task Queue
 	numWorkers := 4
 	numJobs := 10
