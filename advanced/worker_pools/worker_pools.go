@@ -6,18 +6,18 @@ import (
 )
 
 // Worker function
-func worker(id int, tasks <-chan int, result chan<- int) {
+func worker(id int, tasks <-chan int, results chan<- int) {
 	for task := range tasks {
 		fmt.Printf("Worker %d procesing task %d\n", id, task)
 		// Simulate work
 		time.Sleep(time.Second)
-		result <- task * 2 // Example processing
+		results <- task * 2 // Example processing
 	}
 }
 
 func main() {
 	// Tasks, Workers, Task Queue
-	numWorkers := 3
+	numWorkers := 4
 	numJobs := 10
 	tasks := make(chan int, numJobs)
 	results := make(chan int, numJobs)
@@ -31,6 +31,11 @@ func main() {
 	for j := 0; j < numJobs; j++ {
 		tasks <- j
 	}
-	close(tasks)
+	close(tasks) // Close the tasks channel
 
+	// Collect results
+	for k := 0; k < numJobs; k++ {
+		result := <-results
+		fmt.Printf("Result: %d\n", result)
+	}
 }
