@@ -23,7 +23,27 @@ func (c *Counter) getCount() int {
 }
 
 func main() {
-	// *** Demonstrating Mutex for Safe Concurrent Access ***
+	// Why use mutexes?
+	// Safety: Mutexes provide a straightforward way to ensure that only one goroutine
+	//     can access a piece of code or data at a time, preventing race conditions.
+	// Simplicity: Mutexes are easy to understand and implement, making them a good choice
+	//     for protecting shared resources in concurrent programming.
+	// Flexibility: Mutexes can be used to protect complex data structures and critical sections
+	//     of code, allowing for more granular control over concurrency.
+	// Deadlock prevention: When used correctly, mutexes can help prevent deadlocks by ensuring
+	//     that locks are acquired and released in a consistent order.
+	// Read/Write Locks: Mutexes can be extended to read/write locks (RWMutex),
+	//     allowing multiple readers but exclusive access for writers, improving performance
+	//     in read-heavy scenarios.
+
+	// Use cases:
+	//     * Protecting shared resources (e.g., maps, slices)
+	//     * Critical sections of code
+	//     * Coordinating access to files or databases
+	//     * Implementing thread-safe data structures
+	//     * Ensuring consistency in complex operations
+	//     * Synchronizing state changes in concurrent applications
+
 	// This example shows how to use a mutex to safely increment a counter from multiple goroutines.
 
 	// Create a WaitGroup to wait for all goroutines to finish
