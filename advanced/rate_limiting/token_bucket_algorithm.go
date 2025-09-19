@@ -9,7 +9,7 @@ import (
 // It allows a certain number of requests in a given time frame.
 // It uses a buffered channel to represent available tokens, and refills tokens at a specified interval.
 // The struct also includes synchronization primitives to manage the lifecycle of internal goroutines.
-type RateLimiter struct {
+type RateLimiterTBA struct {
 	tokens     chan struct{}
 	refillTime time.Duration
 
@@ -23,8 +23,8 @@ type RateLimiter struct {
 //   - refillTime: duration to wait before refilling the token bucket
 //
 // Example: NewRateLimiter(5, time.Second) allows 5 requests per second.
-func NewRateLimiter(rateLimit int, refillTime time.Duration) *RateLimiter {
-	rl := &RateLimiter{
+func NewRateLimiterTBA(rateLimit int, refillTime time.Duration) *RateLimiterTBA {
+	rl := &RateLimiterTBA{
 		tokens:      make(chan struct{}, rateLimit),
 		refillTime:  refillTime,
 		stopChannel: make(chan struct{}),
@@ -45,7 +45,7 @@ func NewRateLimiter(rateLimit int, refillTime time.Duration) *RateLimiter {
 }
 
 // startRefill refills the token bucket at the specified interval.
-func (rl *RateLimiter) startRefill(rateLimit int) {
+func (rl *RateLimiterTBA) startRefill(rateLimit int) {
 	defer rl.wg.Done()
 
 	// Calculate the interval for refilling tokens
@@ -72,7 +72,7 @@ func (rl *RateLimiter) startRefill(rateLimit int) {
 }
 
 // allow checks if a request can be processed based on the available tokens.
-func (rl *RateLimiter) allow() bool {
+func (rl *RateLimiterTBA) Allow() bool {
 	select {
 	case <-rl.tokens:
 		return true
@@ -82,19 +82,19 @@ func (rl *RateLimiter) allow() bool {
 }
 
 // Stop stops the rate limiter and cleans up resources.
-func (rl *RateLimiter) Stop() {
+func (rl *RateLimiterTBA) Stop() {
 	close(rl.stopChannel)
 	rl.wg.Wait()
 }
 
 // Example usage of the RateLimiter
 func main() {
-	rateLimiter := NewRateLimiter(5, time.Second)
+	rateLimiter := NewRateLimiterTBA(5, time.Second)
 	defer rateLimiter.Stop()
 
 	// Simulate 20 requests
 	for i := 0; i < 20; i++ {
-		if rateLimiter.allow() {
+		if rateLimiter.Allow() {
 			println("Request allowed")
 		} else {
 			println("Request denied")
