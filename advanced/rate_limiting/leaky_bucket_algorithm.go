@@ -103,6 +103,11 @@ func main() {
 	var wg sync.WaitGroup
 	start := make(chan struct{})
 
+	// Simulate 10 concurrent requests.
+	// Each goroutine waits for the `start` channel to be closed before proceeding,
+	// ensuring they all attempt to run Allow() at roughly the same time.
+	// This maximizes contention and demonstrates burst handling.
+	// In a real system, requests would arrive over time, not all at once.
 	for i := 1; i <= 10; i++ {
 		wg.Add(1)
 		go func(id int) {
@@ -118,15 +123,6 @@ func main() {
 			}
 
 			fmt.Printf("[%02d] %s -> %s\n", id, now, status)
-
-			// if leakyBucket.Allow() {
-			// 	fmt.Println("Current time: ", time.Now())
-			// 	fmt.Println("Request accepted.")
-			// } else {
-			// 	fmt.Println("Current time: ", time.Now())
-			// 	fmt.Println("Request denied!")
-			// }
-			// time.Sleep(200 * time.Millisecond) // simulate time between requests
 		}(i)
 	}
 	// Wait for all goroutines to finish.
