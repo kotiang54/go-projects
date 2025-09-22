@@ -69,9 +69,10 @@ func (lb *LeakyBucket) Allow() bool {
 
 	// 1) How much time has passed since we last updated?
 	elapsed := time.Since(lb.lastLeak)
+	var tokensToAdd int
 	if elapsed > 0 && lb.leakRate > 0 {
 		// 2) Convert elapsed time into whole tokens to add
-		tokensToAdd := int(elapsed / lb.leakRate)
+		tokensToAdd = int(elapsed / lb.leakRate)
 		if tokensToAdd > 0 {
 			// 3) Add tokens, saturating at capacity
 			lb.tokens += tokensToAdd
@@ -85,6 +86,9 @@ func (lb *LeakyBucket) Allow() bool {
 		}
 	}
 
+	fmt.Printf("Tokens add %d, Tokens substracted %d, Total tokens: %d\n", tokensToAdd, 1, lb.tokens)
+	fmt.Printf("Last leak time: %v\n", lb.lastLeak)
+
 	// 5) Spend a token if available
 	if lb.tokens > 0 {
 		lb.tokens--
@@ -95,14 +99,37 @@ func (lb *LeakyBucket) Allow() bool {
 
 func main() {
 	// capacity=5, leakRate=500ms => burst up to 5; sustained ≈ 2 requests/sec.
-	lb := NewLeakyBucket(5, 500*time.Millisecond)
+	leakyBucket := NewLeakyBucket(5, 500*time.Millisecond)
+	var wg sync.WaitGroup
+	start := make(chan struct{})
 
 	for i := 1; i <= 10; i++ {
-		if lb.Allow() {
-			fmt.Println("Request accepted.")
-		} else {
-			fmt.Println("Request denied!")
-		}
-		time.Sleep(200 * time.Millisecond) // simulate time between requests
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			// Try to take a token (non-blocking).
+			<-start
+			allowed := leakyBucket.Allow()
+			now := time.Now().Format("15:04:05.0000")
+			status := "DENIED"
+
+			if allowed {
+				status = "ALLOWED"
+			}
+
+			fmt.Printf("[%02d] %s -> %s\n", id, now, status)
+
+			// if leakyBucket.Allow() {
+			// 	fmt.Println("Current time: ", time.Now())
+			// 	fmt.Println("Request accepted.")
+			// } else {
+			// 	fmt.Println("Current time: ", time.Now())
+			// 	fmt.Println("Request denied!")
+			// }
+			// time.Sleep(200 * time.Millisecond) // simulate time between requests
+		}(i)
 	}
+	// Wait for all goroutines to finish.
+	close(start)
+	wg.Wait()
 }
