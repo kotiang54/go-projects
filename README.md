@@ -4,17 +4,21 @@ This repository contains a collection of Go programming examples and mini-projec
 
 ## Structure
 
-- **intermediate/env_var/**
-  Safe interaction with environment variables, including setting, unsetting, and listing environment variable keys, with attention to security and error handling.
+- **basics/**
+  Foundational Go concepts: variables, functions, control flow, slices, maps, and basic error handling.
 
-- **intermediate/logging/**
-  Demonstrates logging techniques using Go's standard `log` package and the third-party `logrus` library, including custom loggers, log levels, file logging, and structured logging.
+- **intermediate/**
+  Examples covering:
+  - Safe interaction with environment variables (setting, unsetting, listing keys, security, error handling)
+  - Logging techniques with Go's standard `log` package and third-party `logrus` (custom loggers, log levels, file logging, structured logging)
+  - JSON encoding/decoding with structs, embedding, marshaling/unmarshaling, arrays, and decoding unknown structures
+  - Using Go's `io` package for reading/writing with interfaces, buffers, pipes, files, robust error handling, and resource management
 
-- **intermediate/json/**
-  Shows JSON encoding and decoding with structs, named and anonymous embedding, marshaling/unmarshaling, handling arrays, and decoding unknown JSON structures into maps.
+- **advanced/**
+  Advanced Go topics such as concurrency (goroutines, channels), context usage, and custom error types.
 
-- **intermediate/io_package/**
-  Examples of using Go's `io` package for reading and writing with interfaces, buffers, pipes, and files, including robust error handling and resource management.
+- **games/**
+  Simple game implementations in Go, demonstrating application structure, user input, and basic game logic.
 
 ## Usage
 
@@ -34,6 +38,8 @@ Replace the folder and filename as needed for other examples.
 - Use of Go interfaces (`io.Reader`, `io.Writer`, `io.Closer`) for flexible I/O.
 - Demonstrations of third-party libraries for advanced logging.
 - Practical examples for marshaling and unmarshaling JSON data.
+- Concurrency and context management examples.
+- Game logic and user interaction samples.
 
 ## Requirements
 
