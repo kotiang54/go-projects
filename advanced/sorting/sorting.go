@@ -12,6 +12,33 @@ type Person struct {
 	Age  int
 }
 
+type By func(p1, p2 *Person) bool
+
+type personSorter struct {
+	people []Person
+	by     func(p1, p2 *Person) bool
+}
+
+func (s *personSorter) Len() int {
+	return len(s.people)
+}
+
+func (s *personSorter) Less(i, j int) bool {
+	return s.by(&s.people[i], &s.people[j])
+}
+
+func (s *personSorter) Swap(i, j int) {
+	s.people[i], s.people[j] = s.people[j], s.people[i]
+}
+
+func (by By) Sort(people []Person) {
+	ps := &personSorter{
+		people: people,
+		by:     by,
+	}
+	sort.Sort(ps)
+}
+
 // ByAge implements sort.Interface for []Person based on the Age field.
 type ByAge []Person
 type ByName []Person
@@ -63,10 +90,19 @@ func main() {
 	}
 
 	// Sort people by age using custom sort
-	sort.Sort(ByAge(people))
-	fmt.Println("People sorted by age:", people)
+	// sort.Sort(ByAge(people))
+	// fmt.Println("People sorted by age:", people)
 
 	// Sort people by name using custom sort
-	sort.Sort(ByName(people))
-	fmt.Println("People sorted by name:", people)
+	// sort.Sort(ByName(people))
+	// fmt.Println("People sorted by name:", people)
+
+	// Sort people by age using a custom function
+	// Define the comparison function
+	name := func(p1, p2 *Person) bool {
+		return p1.Name < p2.Name
+	}
+
+	By(name).Sort(people)
+	fmt.Println("People sorted by name using custom function:", people)
 }
