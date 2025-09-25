@@ -24,7 +24,6 @@ Each folder contains a standalone Go file with a `main()` function. To run an ex
 cd intermediate/env_var
 go run env_var.go
 ```
-
 Replace the folder and filename as needed for other examples.
 
 ## Highlights
