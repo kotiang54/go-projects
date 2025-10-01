@@ -27,7 +27,7 @@ func TestAddTableDriven(t *testing.T) {
 	}
 }
 
-func TestAddSubTest(t *testing.T) {
+func TestAddSubTests(t *testing.T) {
 	tests := []struct {
 		a, b, expected int
 	}{
@@ -52,5 +52,26 @@ func TestAdd(t *testing.T) {
 	expected := 7
 	if result != expected {
 		t.Errorf("Add(2, 5) = %d; want %d", result, expected)
+	}
+}
+
+// Benchmarking - measures the performance of a code
+// - How long it takes to execute a piece of code
+
+func BenchmarkAddSmallInput(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Add(1, 2)
+	}
+}
+
+func BenchmarkAddMediumInput(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Add(1000, 2000)
+	}
+}
+
+func BenchmarkAddLargeInput(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Add(1782635343, 28273534250)
 	}
 }
