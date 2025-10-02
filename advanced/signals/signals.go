@@ -24,12 +24,23 @@ func main() {
 	// Create a channel to receive OS signals
 	signals := make(chan os.Signal, 1)
 
-	// Notify channel on interrupt or terminal signals
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
+	// Notify channel on interrupt or terminal signals like SIGINT, SIGTERM, SIGHUP
+	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 
 	go func() {
 		sig := <-signals
-		fmt.Println("Received signal:", sig)
+
+		// Handle the received signal
+		switch sig {
+		case syscall.SIGINT:
+			fmt.Println("Received SIGINT (Interrupt)")
+		case syscall.SIGTERM:
+			fmt.Println("Received SIGTERM (Termination)")
+		case syscall.SIGHUP:
+			fmt.Println("Received SIGHUP (Hangup)")
+		default:
+			fmt.Println("Received other signal:", sig)
+		}
 
 		// Perform cleanup tasks here
 		fmt.Println("Performing cleanup tasks...")
