@@ -16,8 +16,15 @@ import (
 
 // Structs with reflect package
 type Person struct {
-	name string
-	age  int
+	Name string
+	Age  int
+}
+
+// Working with methods
+type Greeter struct{}
+
+func (g Greeter) Greet(name string) string {
+	return "Hello, " + name
 }
 
 func main() {
@@ -57,8 +64,8 @@ func main() {
 
 	// Struct with reflection
 	p := Person{
-		name: "Jane Doe",
-		age:  30,
+		Name: "Jane Doe",
+		Age:  30,
 	}
 
 	v = reflect.ValueOf(p)
@@ -69,10 +76,30 @@ func main() {
 	}
 
 	v1 = reflect.ValueOf(&p).Elem()
-	nameField := v1.FieldByName("name")
+	nameField := v1.FieldByName("Name")
 	if nameField.CanSet() {
 		nameField.SetString("John Doe")
 	} else {
 		fmt.Println("Cannot set name field")
 	}
+
+	// Methods with reflection
+	g := Greeter{}
+	t = reflect.TypeOf(g)
+	v = reflect.ValueOf(g)
+	var method reflect.Method
+
+	fmt.Println("")
+
+	fmt.Println("Type:", t)
+	for i := range t.NumMethod() {
+		method = t.Method(i)
+		fmt.Printf("Method %d: %s\n", i, method.Name)
+	}
+
+	m := v.MethodByName(method.Name)
+	args := []reflect.Value{reflect.ValueOf("Alice")}
+	result := m.Call(args)
+
+	fmt.Println("Result:", result[0].String())
 }
