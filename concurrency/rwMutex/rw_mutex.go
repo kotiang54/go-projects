@@ -5,11 +5,18 @@ import (
 	"sync"
 )
 
+// What are RWMutexes?
+// RWMutexes (Read-Write Mutexes) are synchronization primitives that allow
+// multiple readers or a single writer to access a shared resource concurrently.
+// They are useful in scenarios where read operations are more frequent than write operations,
+// as they allow multiple goroutines to read the data simultaneously while ensuring exclusive access for write operations.
+
 var (
 	rwmu    sync.RWMutex
 	counter int
 )
 
+// readCounter reads the value of counter with a read lock
 func readCounter(wg *sync.WaitGroup) {
 	defer wg.Done()
 	rwmu.RLock()
@@ -17,6 +24,7 @@ func readCounter(wg *sync.WaitGroup) {
 	fmt.Println("Read Counter:", counter)
 }
 
+// writeCounter writes a new value to counter with a write lock
 func writeCounter(wg *sync.WaitGroup, value int) {
 	defer wg.Done()
 	rwmu.Lock()
@@ -37,7 +45,8 @@ func main() {
 
 	// Start a writer
 	wg.Add(1)
-	go writeCounter(&wg, 42)
+	// time.Sleep(time.Second) // Ensure some reads happen before write
+	go writeCounter(&wg, 15)
 
 	wg.Wait()
 }
