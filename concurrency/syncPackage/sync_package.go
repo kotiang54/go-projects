@@ -11,6 +11,7 @@ import (
 // to wait for certain conditions to be met. They are often used in conjunction
 // with mutexes to avoid busy waiting and to signal other goroutines when a condition has changed.
 
+// sync.NewCond example:
 const bufferSize = 5
 
 type buffer struct {
@@ -62,7 +63,7 @@ func (b *buffer) consume() int {
 // Example producer and consumer functions
 func producer(b *buffer, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 5; i++ {
 		b.produce(i + 100)
 		time.Sleep(100 * time.Millisecond) // Simulate time taken to produce an item
 	}
@@ -70,10 +71,18 @@ func producer(b *buffer, wg *sync.WaitGroup) {
 
 func consumer(b *buffer, wg *sync.WaitGroup) {
 	defer wg.Done()
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 5; i++ {
 		b.consume()
 		time.Sleep(200 * time.Millisecond) // Simulate time taken to consume an item
 	}
+}
+
+// sync.Once example:
+
+var once sync.Once
+
+func initialize() {
+	fmt.Println("This function will be called only once even if called multiple times.")
 }
 
 func main() {
@@ -87,4 +96,16 @@ func main() {
 
 	wg.Wait()
 	fmt.Println("All producers and consumers have finished.")
+	fmt.Println("")
+
+	// Example usage of sync.Once
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			fmt.Println("Goroutine # ", i)
+			once.Do(initialize) // initialize() will be called only once
+		}(i)
+	}
+	wg.Wait()
 }
