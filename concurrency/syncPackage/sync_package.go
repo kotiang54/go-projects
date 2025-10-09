@@ -78,11 +78,23 @@ func consumer(b *buffer, wg *sync.WaitGroup) {
 }
 
 // sync.Once example:
-
 var once sync.Once
 
 func initialize() {
 	fmt.Println("This function will be called only once even if called multiple times.")
+}
+
+// sync.Pool
+// sync.Pool is a concurrency-safe pool of temporary objects that can be reused
+// to reduce the overhead of allocating and deallocating memory frequently.
+// It is particularly useful in high-performance applications where objects are
+// created and destroyed frequently, as it helps to minimize garbage collection
+// overhead and improve performance by reusing objects instead of creating new ones.
+
+// Example usage of sync.Once and sync.Pool
+type person struct {
+	name string
+	age  int
 }
 
 func main() {
@@ -108,4 +120,33 @@ func main() {
 		}(i)
 	}
 	wg.Wait()
+
+	fmt.Println("")
+
+	// Example usage of sync.Pool
+	personPool := sync.Pool{
+		New: func() interface{} {
+			fmt.Println("Creating a new person object.")
+			return &person{}
+		},
+	}
+
+	// Get a person object from the pool: Creates a new one since the pool is empty
+	p1 := personPool.Get().(*person)
+	p1.name = "Alice"
+	p1.age = 24
+	fmt.Println("Person 1:", p1)
+	fmt.Printf("Person1 - Name: %s, Age: %d\n", p1.name, p1.age)
+
+	// Return the person object to the pool
+	personPool.Put(p1)
+	fmt.Println("Returned Person 1 to the pool.")
+
+	// Get another person object from the pool
+	p2 := personPool.Get().(*person)
+	fmt.Println("Person 2:", p2)                                 // This will reuse the object returned to the pool
+	fmt.Printf("Person2 - Name: %s, Age: %d\n", p2.name, p2.age) // Should print Alice, 24
+
+	p3 := personPool.Get().(*person)
+	fmt.Println("Got another person:", p3) // The pool is empty, so it creates a new one with default values
 }
