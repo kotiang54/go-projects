@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 // What are condition variables?
@@ -18,6 +19,7 @@ type buffer struct {
 	cond  *sync.Cond
 }
 
+// newBuffer initializes a new buffer with a given size
 func newBuffer(size int) *buffer {
 	b := &buffer{items: make([]int, 0, size)}
 	b.cond = sync.NewCond(&b.mu) // Initialize the condition variable with the buffer's mutex
@@ -31,7 +33,7 @@ func (b *buffer) produce(item int) {
 	defer b.mu.Unlock()
 
 	for len(b.items) == bufferSize {
-		b.cond.Wait() // Wait until there is space in the buffer
+		b.cond.Wait() // Wait until there is space in the buffe
 	}
 
 	b.items = append(b.items, item)
@@ -39,8 +41,9 @@ func (b *buffer) produce(item int) {
 	b.cond.Signal() // Signal that an item has been added
 }
 
-// Consume removes and returns an item from the buffer
-// If the buffer is empty, it waits until an item is available
+// Consume removes and returns the first item from the buffer in a thread-safe manner.
+// If the buffer is empty, it waits until an item becomes available.
+// After consuming an item, it signals any waiting goroutines that space is available.
 func (b *buffer) consume() int {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -56,6 +59,32 @@ func (b *buffer) consume() int {
 	return item
 }
 
+// Example producer and consumer functions
+func producer(b *buffer, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for i := 0; i < 10; i++ {
+		b.produce(i + 100)
+		time.Sleep(100 * time.Millisecond) // Simulate time taken to produce an item
+	}
+}
+
+func consumer(b *buffer, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for i := 0; i < 10; i++ {
+		b.consume()
+		time.Sleep(200 * time.Millisecond) // Simulate time taken to consume an item
+	}
+}
+
 func main() {
 	// Example usage of condition variables
+	buffer := newBuffer(bufferSize)
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+	go producer(buffer, &wg)
+	go consumer(buffer, &wg)
+
+	wg.Wait()
+	fmt.Println("All producers and consumers have finished.")
 }
