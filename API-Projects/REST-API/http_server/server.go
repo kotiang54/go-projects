@@ -6,8 +6,11 @@ import (
 	"net/http"
 )
 
-func main() {
+// Create a simple HTTP server that listens on port 3000 and responds
+// with "Hello, World!" to any incoming requests.
 
+func main() {
+	// Define a handler function for the root URL
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		// Handle requests to the root URL
 		fmt.Fprintln(resp, "Hello, World! This is a simple HTTP server.")
