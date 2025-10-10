@@ -4,13 +4,21 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
+
+// Create a simple HTTP client that makes a GET request to a specified URL
+// and prints the response body to the console.
 
 func main() {
 	// Create a new HTTP client
-	client := &http.Client{}
+	client := &http.Client{Timeout: 10 * time.Second}
 
-	resp, err := client.Get("http://jsonplaceholder.typicode.com/posts/1")
+	url := "http://jsonplaceholder.typicode.com/posts/1"
+	// url := "http://127.0.0.1:3000"
+	// url := "https://swapi.dev/api/people/1"
+
+	resp, err := client.Get(url)
 	if err != nil {
 		fmt.Print("Error making GET request:", err)
 		return
