@@ -5,6 +5,10 @@
 *.so
 *.dylib
 
+# Security files
+*.pem
+*.key
+
 # Test binary files
 *.test
 
