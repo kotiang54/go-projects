@@ -20,10 +20,12 @@ func main() {
 	// Example: curl -X POST http://localhost:3000/users
 
 	http.HandleFunc("/orders", func(resp http.ResponseWriter, req *http.Request) {
+		logRequestDetails(req)
 		fmt.Fprintf(resp, "Handling incoming orders")
 	})
 
 	http.HandleFunc("/users", func(resp http.ResponseWriter, req *http.Request) {
+		logRequestDetails(req)
 		fmt.Fprintf(resp, "Handling users")
 	})
 
@@ -66,5 +68,35 @@ func main() {
 	err := server.ListenAndServeTLS(cert, key)
 	if err != nil {
 		log.Fatalln("Error starting server:", err)
+	}
+}
+
+// logRequestDetails logs the HTTP version and TLS version (if applicable) of the incoming request
+func logRequestDetails(r *http.Request) {
+	httpVersion := r.Proto
+	fmt.Println("Received request with HTTP version:", httpVersion)
+
+	// Check if the request is over TLS
+	if r.TLS != nil {
+		tlsVersion := getTLSVersionName(r.TLS.Version)
+		fmt.Println("Received request with TLS version:", tlsVersion)
+	} else {
+		fmt.Println("Received request without TLS")
+	}
+}
+
+// getTLSVersionName returns the human-readable name of the TLS version
+func getTLSVersionName(version uint16) string {
+	switch version {
+	case tls.VersionTLS10:
+		return "TLS 1.0"
+	case tls.VersionTLS11:
+		return "TLS 1.1"
+	case tls.VersionTLS12:
+		return "TLS 1.2"
+	case tls.VersionTLS13:
+		return "TLS 1.3"
+	default:
+		return "Unknown TLS version"
 	}
 }
