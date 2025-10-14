@@ -40,6 +40,32 @@ func main() {
 	// Make sure to generate cert.pem and key.pem files using OpenSSL
 	// You can use the following command to generate a self-signed certificate:
 	// 	- openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365
+	// 	- or use a config file for more options:
+	// Create a file named openssl.cnf with the following content:
+	/*
+		[req]
+		default_bits       = 2048
+		prompt             = no
+		default_md         = sha256
+		distinguished_name = dn
+		x509_extensions    = v3_req
+
+		[dn]
+		C = US
+		ST = California
+		L = San Francisco
+		O = My Company
+		CN = localhost
+
+		[v3_req]
+		subjectAltName = @alt_names
+
+		[alt_names]
+		DNS.1 = localhost
+		DNS.2 = example.com
+	*/
+	// Then run the following command to generate the cert and key:
+	// openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem -config openssl.cnf
 
 	// Load the TLS cert and key
 	cert := "cert.pem"
