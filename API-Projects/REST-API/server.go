@@ -20,10 +20,12 @@ func main() {
 	// Example: curl -X POST http://localhost:3000/users
 
 	http.HandleFunc("/orders", func(resp http.ResponseWriter, req *http.Request) {
+		logRequestDetails(req)
 		fmt.Fprintf(resp, "Handling incoming orders")
 	})
 
 	http.HandleFunc("/users", func(resp http.ResponseWriter, req *http.Request) {
+		logRequestDetails(req)
 		fmt.Fprintf(resp, "Handling users")
 	})
 
@@ -38,6 +40,32 @@ func main() {
 	// Make sure to generate cert.pem and key.pem files using OpenSSL
 	// You can use the following command to generate a self-signed certificate:
 	// 	- openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365
+	// 	- or use a config file for more options:
+	// Create a file named openssl.cnf with the following content:
+	/*
+		[req]
+		default_bits       = 2048
+		prompt             = no
+		default_md         = sha256
+		distinguished_name = dn
+		x509_extensions    = v3_req
+
+		[dn]
+		C = US
+		ST = California
+		L = San Francisco
+		O = My Company
+		CN = localhost
+
+		[v3_req]
+		subjectAltName = @alt_names
+
+		[alt_names]
+		DNS.1 = localhost
+		DNS.2 = example.com
+	*/
+	// Then run the following command to generate the cert and key:
+	// openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem -config openssl.cnf
 
 	// Load the TLS cert and key
 	cert := "cert.pem"
@@ -66,5 +94,35 @@ func main() {
 	err := server.ListenAndServeTLS(cert, key)
 	if err != nil {
 		log.Fatalln("Error starting server:", err)
+	}
+}
+
+// logRequestDetails logs the HTTP version and TLS version (if applicable) of the incoming request
+func logRequestDetails(r *http.Request) {
+	httpVersion := r.Proto
+	fmt.Println("Received request with HTTP version:", httpVersion)
+
+	// Check if the request is over TLS
+	if r.TLS != nil {
+		tlsVersion := getTLSVersionName(r.TLS.Version)
+		fmt.Println("Received request with TLS version:", tlsVersion)
+	} else {
+		fmt.Println("Received request without TLS")
+	}
+}
+
+// getTLSVersionName returns the human-readable name of the TLS version
+func getTLSVersionName(version uint16) string {
+	switch version {
+	case tls.VersionTLS10:
+		return "TLS 1.0"
+	case tls.VersionTLS11:
+		return "TLS 1.1"
+	case tls.VersionTLS12:
+		return "TLS 1.2"
+	case tls.VersionTLS13:
+		return "TLS 1.3"
+	default:
+		return "Unknown TLS version"
 	}
 }

@@ -5,7 +5,8 @@
 *.so
 *.dylib
 
-# Security files
+# Configuration or secure files
+*.cnf
 *.pem
 *.key
 
