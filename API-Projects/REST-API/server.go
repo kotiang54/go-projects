@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-
-	"golang.org/x/net/http2"
 )
 
 // logRequestDetails logs the HTTP version and TLS version (if applicable) of the incoming request
@@ -124,8 +122,8 @@ func main() {
 		// To disable mutual TLS (mTLS), comment out the following two lines.
 		// With these lines enabled, the server requires clients to present a valid certificate signed by the CA in cert.pem.
 		// This enforces mTLS, meaning both server and client must authenticate each other.
-		ClientAuth: tls.RequireAndVerifyClientCert,
-		ClientCAs:  loadClientCAs(),
+		// ClientAuth: tls.RequireAndVerifyClientCert,
+		// ClientCAs:  loadClientCAs(),
 	}
 
 	// Create a custom server
@@ -133,16 +131,18 @@ func main() {
 		Addr:      fmt.Sprintf(":%d", port),
 		TLSConfig: tlsConfig,
 		Handler:   nil, // Use default mux
+		// Disable http2 protocol from the API - comment out for http2 --> http 1.1
+		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){},
 	}
 
-	// Enable http2
-	http2.ConfigureServer(server, &http2.Server{})
+	// Uncomment to enable http2
+	// http2.ConfigureServer(server, &http2.Server{})
 
 	fmt.Println("Server is running on port:", port)
 	// Start the server with HTTP 1.1 - Server without TLS
 	// err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 
-	// Start the server with HTTP 2.0 - Server with TLS
+	// Start the server with HTTP 1.1 / 2.0 - Server with TLS
 	err := server.ListenAndServeTLS(cert, key)
 	if err != nil {
 		log.Fatalln("Error starting server:", err)
