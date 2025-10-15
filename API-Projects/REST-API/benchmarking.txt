@@ -1,0 +1,31 @@
+# Fedora 42 installation - Build wrk from source (quick & reliable)
+# deps
+sudo dnf install -y perl
+sudo dnf install -y git gcc make openssl-devel luajit-devel zlib-devel
+
+# build
+git clone https://github.com/wg/wrk.git
+cd wrk
+make -j
+
+# install
+sudo install -m 0755 wrk /usr/local/bin/wrk
+
+# test
+wrk --version
+
+// RUN example
+wrk -t12 -c400 -d30s http://127.0.0.1:8080/index.html
+
+
+// Installation for nghttp2 command
+sudo dnf install -y nghttp2
+
+That will install:
+nghttp → the HTTP/2 client (like curl for HTTP/2)
+h2load → benchmarking tool
+nghttpx → reverse proxy
+
+// RUN example
+h2load -n 10000 -c 100 -t 4 "https://localhost:3000/orders"
+
