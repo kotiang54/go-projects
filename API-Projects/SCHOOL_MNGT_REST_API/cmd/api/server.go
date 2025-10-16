@@ -1,10 +1,18 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 )
+
+type User struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
+	City string `json:"city"`
+}
 
 func main() {
 	// Main entry of the api
@@ -28,6 +36,43 @@ func main() {
 			return
 
 		case http.MethodPost:
+			// Parse RAW Body data
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				return
+			}
+			defer r.Body.Close()
+
+			fmt.Println("RAW Body:", string(body))
+
+			// If you expect a json data, then unmarshall
+			var userInstance User
+			err = json.Unmarshal(body, &userInstance)
+			if err != nil {
+				log.Fatalln("Unmarshall error:", err)
+				return
+			}
+
+			fmt.Println(userInstance)
+			fmt.Println("Receved user name as:", userInstance.Name)
+
+			// Access the request details:
+			fmt.Println("Body:", r.Body)
+			fmt.Println("Form:", r.Form)
+			fmt.Println("Header:", r.Header)
+			fmt.Println("Context:", r.Context())
+			fmt.Println("Host:", r.Host)
+			fmt.Println("Method:", r.Method)
+			fmt.Println("Protocol:", r.Proto)
+			fmt.Println("Remote Address:", r.RemoteAddr)
+			fmt.Println("Request URI:", r.RequestURI)
+			fmt.Println("URL:", r.URL)
+			fmt.Println("Port:", r.URL.Port())
+			fmt.Println("TLS:", r.TLS)
+			fmt.Println("Trailer:", r.Trailer)
+			fmt.Println("User Agent:", r.UserAgent())
+			fmt.Println("Transfer Encoding:", r.TransferEncoding)
+
 			w.Write([]byte("Hello POST method on Teachers Route"))
 			fmt.Println("Hello POST method on Teachers Route")
 			return
