@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -179,6 +180,8 @@ func main() {
 	// Main entry of the api
 
 	port := 3000
+	cert := "../../cert.pem"
+	key := "../../key.pem"
 
 	// Create a routes
 	http.HandleFunc("/", rootHandler)
@@ -194,7 +197,20 @@ func main() {
 
 	fmt.Println("Server is running on port:", port)
 
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	// Make HTTP 1.1 with TLS server
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS13,
+	}
+
+	// Create a custom server
+	server := &http.Server{
+		Addr:         fmt.Sprintf(":%d", port),
+		Handler:      nil,
+		TLSConfig:    tlsConfig,
+		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){},
+	}
+
+	err := server.ListenAndServeTLS(cert, key)
 	if err != nil {
 		log.Fatalln("Error starting the server:", err)
 	}
