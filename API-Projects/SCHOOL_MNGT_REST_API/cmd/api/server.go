@@ -109,9 +109,6 @@ func teachersHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hello DELETE method on Teachers Route")
 		return
 	}
-
-	// w.Write([]byte("Hello Teachers Route"))
-	// fmt.Println("Hello Teachers Route")
 }
 
 func studentsHandler(w http.ResponseWriter, r *http.Request) {
@@ -140,9 +137,6 @@ func studentsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hello DELETE method on Students Route")
 		return
 	}
-
-	// w.Write([]byte("Hello Students Route"))
-	// fmt.Println("Hello Students Route")
 }
 
 func executivesHandler(w http.ResponseWriter, r *http.Request) {
@@ -171,29 +165,29 @@ func executivesHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hello DELETE method on Executives Route")
 		return
 	}
-
-	// w.Write([]byte("Hello Executives Route"))
-	// fmt.Println("Hello Executives Route")
 }
 
 func main() {
 	// Main entry of the api
 
 	port := 3000
-	cert := "../../cert.pem"
-	key := "../../key.pem"
+	cert := "cert.pem"
+	key := "key.pem"
+
+	// Multiplexer for http routes
+	mux := http.NewServeMux()
 
 	// Create a routes
-	http.HandleFunc("/", rootHandler)
+	mux.HandleFunc("/", rootHandler)
 
 	// Teachers route
-	http.HandleFunc("/teachers/", teachersHandler)
+	mux.HandleFunc("/teachers/", teachersHandler)
 
 	// Students route
-	http.HandleFunc("/students/", studentsHandler)
+	mux.HandleFunc("/students/", studentsHandler)
 
 	// Executives route
-	http.HandleFunc("/executives/", executivesHandler)
+	mux.HandleFunc("/executives/", executivesHandler)
 
 	fmt.Println("Server is running on port:", port)
 
@@ -205,7 +199,7 @@ func main() {
 	// Create a custom server
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
-		Handler:      nil,
+		Handler:      mux,
 		TLSConfig:    tlsConfig,
 		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){},
 	}
