@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,13 +23,30 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func teachersHandler(w http.ResponseWriter, r *http.Request) {
+	// Path parameters e.g. /teachers/{id}
+	// Query parameters e.g. /teachers/?key=value&query=value2&sortBy=email&sortOrder=ASC
+
 	switch r.Method {
 	case http.MethodGet:
-		fmt.Println(r.URL.Path)
+		// Path
+		fmt.Println("Path:", r.URL.Path)
 		path := strings.TrimPrefix(r.URL.Path, "/teachers/")
 		userID := strings.TrimSuffix(path, "/")
 
 		fmt.Println("The teacher ID is:", userID)
+
+		// Query
+		fmt.Println("Query:", r.URL.Query())
+		queryParams := r.URL.Query()
+		sortby := queryParams.Get("sortBy")
+		key := queryParams.Get("key")
+		sortorder := queryParams.Get("sortOrder")
+		if sortorder == "" {
+			sortorder = "DESC"
+		}
+
+		// Print values
+		fmt.Printf("Sortby: %v, Sort order: %v, Key: %v\n", sortby, key, sortorder)
 
 		w.Write([]byte("Hello GET method on Teachers Route"))
 		fmt.Println("Hello GET method on Teachers Route")
@@ -91,9 +109,6 @@ func teachersHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hello DELETE method on Teachers Route")
 		return
 	}
-
-	// w.Write([]byte("Hello Teachers Route"))
-	// fmt.Println("Hello Teachers Route")
 }
 
 func studentsHandler(w http.ResponseWriter, r *http.Request) {
@@ -122,9 +137,6 @@ func studentsHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hello DELETE method on Students Route")
 		return
 	}
-
-	// w.Write([]byte("Hello Students Route"))
-	// fmt.Println("Hello Students Route")
 }
 
 func executivesHandler(w http.ResponseWriter, r *http.Request) {
@@ -153,31 +165,46 @@ func executivesHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Hello DELETE method on Executives Route")
 		return
 	}
-
-	// w.Write([]byte("Hello Executives Route"))
-	// fmt.Println("Hello Executives Route")
 }
 
 func main() {
 	// Main entry of the api
 
 	port := 3000
+	cert := "cert.pem"
+	key := "key.pem"
+
+	// Multiplexer for http routes
+	mux := http.NewServeMux()
 
 	// Create a routes
-	http.HandleFunc("/", rootHandler)
+	mux.HandleFunc("/", rootHandler)
 
 	// Teachers route
-	http.HandleFunc("/teachers/", teachersHandler)
+	mux.HandleFunc("/teachers/", teachersHandler)
 
 	// Students route
-	http.HandleFunc("/students/", studentsHandler)
+	mux.HandleFunc("/students/", studentsHandler)
 
 	// Executives route
-	http.HandleFunc("/executives/", executivesHandler)
+	mux.HandleFunc("/executives/", executivesHandler)
 
 	fmt.Println("Server is running on port:", port)
 
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	// Make HTTP 1.1 with TLS server
+	tlsConfig := &tls.Config{
+		MinVersion: tls.VersionTLS13,
+	}
+
+	// Create a custom server
+	server := &http.Server{
+		Addr:         fmt.Sprintf(":%d", port),
+		Handler:      mux,
+		TLSConfig:    tlsConfig,
+		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){},
+	}
+
+	err := server.ListenAndServeTLS(cert, key)
 	if err != nil {
 		log.Fatalln("Error starting the server:", err)
 	}
