@@ -7,7 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"school_management_api/internal/api/middlewares"
+	mw "school_management_api/internal/api/middlewares"
 	"strings"
 )
 
@@ -200,7 +200,7 @@ func main() {
 	// Create a custom server
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
-		Handler:      middlewares.SecurityHeaders(mux),
+		Handler:      mw.SecurityHeaders(mw.Cors(mux)),
 		TLSConfig:    tlsConfig,
 		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){},
 	}
