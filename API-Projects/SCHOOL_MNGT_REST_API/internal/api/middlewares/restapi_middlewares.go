@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -77,12 +78,13 @@ func Cors(next http.Handler) http.Handler {
 	})
 }
 
-// responseWriter
+// responseWriter wraps http.ResponseWriter to capture the status code
 type responseWriter struct {
 	http.ResponseWriter
 	status int
 }
 
+// Override the WriteHeader method to capture the status code
 func (rw *responseWriter) WriteHeader(code int) {
 	rw.status = code
 	rw.ResponseWriter.WriteHeader(code)
@@ -141,4 +143,34 @@ func Compression(next http.Handler) http.Handler {
 		next.ServeHTTP(gzWriter, r)
 		fmt.Println("Sent Compressed Response from Gzip Writer!")
 	})
+}
+
+// Rate limiting middleware
+type rateLimiter struct {
+	mu        sync.Mutex
+	visitors  map[string]int // Map to track request counts per user/IP
+	limit     int
+	resetTime time.Duration
+}
+
+// NewRateLimiter creates a new rateLimiter instance
+func NewRateLimiter(limit int, resetTime time.Duration) *rateLimiter {
+	rl := &rateLimiter{
+		visitors:  make(map[string]int),
+		limit:     limit,
+		resetTime: resetTime,
+	}
+	// Start the reset visitor counts periodically
+	rl.resetVisitorCount()
+	return rl
+}
+
+// resetVisitorCount resets the visitor count for all users
+func (rl *rateLimiter) resetVisitorCount() {
+	for {
+		time.Sleep(rl.resetTime)
+		rl.mu.Lock()
+		rl.visitors = make(map[string]int)
+		rl.mu.Unlock()
+	}
 }
