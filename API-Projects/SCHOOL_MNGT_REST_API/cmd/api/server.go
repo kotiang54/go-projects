@@ -51,7 +51,6 @@ func teachersHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Sortby: %v, Sort order: %v, Key: %v\n", sortby, key, sortorder)
 
 		w.Write([]byte("Hello GET method on Teachers Route"))
-		fmt.Println("Hello GET method on Teachers Route")
 		return
 
 	case http.MethodPost:
@@ -93,22 +92,18 @@ func teachersHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Transfer Encoding:", r.TransferEncoding)
 
 		w.Write([]byte("Hello POST method on Teachers Route"))
-		fmt.Println("Hello POST method on Teachers Route")
 		return
 
 	case http.MethodPut:
 		w.Write([]byte("Hello PUT method on Teachers Route"))
-		fmt.Println("Hello PUT method on Teachers Route")
 		return
 
 	case http.MethodPatch:
 		w.Write([]byte("Hello PATCH method on Teachers Route"))
-		fmt.Println("Hello PATCH method on Teachers Route")
 		return
 
 	case http.MethodDelete:
 		w.Write([]byte("Hello DELETE method on Teachers Route"))
-		fmt.Println("Hello DELETE method on Teachers Route")
 		return
 	}
 }
@@ -117,26 +112,21 @@ func studentsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		w.Write([]byte("Hello GET method on Students Route"))
-		fmt.Println("Hello GET method on Students Route")
 		return
 
 	case http.MethodPost:
 		w.Write([]byte("Hello POST method on Students Route"))
-		fmt.Println("Hello POST method on Students Route")
 		return
 	case http.MethodPut:
 		w.Write([]byte("Hello PUT method on Students Route"))
-		fmt.Println("Hello PUT method on Students Route")
 		return
 
 	case http.MethodPatch:
 		w.Write([]byte("Hello PATCH method on Students Route"))
-		fmt.Println("Hello PATCH method on Students Route")
 		return
 
 	case http.MethodDelete:
 		w.Write([]byte("Hello DELETE method on Students Route"))
-		fmt.Println("Hello DELETE method on Students Route")
 		return
 	}
 }
@@ -145,26 +135,21 @@ func executivesHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		w.Write([]byte("Hello GET method on Executives Route"))
-		fmt.Println("Hello GET method on Executives Route")
 		return
 
 	case http.MethodPost:
 		w.Write([]byte("Hello POST method on Executives Route"))
-		fmt.Println("Hello POST method on Executives Route")
 		return
 	case http.MethodPut:
 		w.Write([]byte("Hello PUT method on Executives Route"))
-		fmt.Println("Hello PUT method on Executives Route")
 		return
 
 	case http.MethodPatch:
 		w.Write([]byte("Hello PATCH method on Executives Route"))
-		fmt.Println("Hello PATCH method on Executives Route")
 		return
 
 	case http.MethodDelete:
 		w.Write([]byte("Hello DELETE method on Executives Route"))
-		fmt.Println("Hello DELETE method on Executives Route")
 		return
 	}
 }
