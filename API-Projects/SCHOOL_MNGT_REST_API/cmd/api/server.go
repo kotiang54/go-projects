@@ -195,10 +195,20 @@ func main() {
 	// rate limiting middleware can be added here
 	rl := mw.NewRateLimiter(5, time.Minute)
 
+	// HPP middleware options configuration
+	hppOptions := mw.HPPOptions{
+		CheckQuery:                 true,
+		CheckBody:                  true,
+		CheckBodyOnlyForContenType: "application/x-www-form-urlencoded",
+		Whitelist:                  []string{"sortBy", "sortOrder", "age", "name", "class"},
+	}
+
+	secureMux := mw.Hpp(hppOptions)(mw.Compression(mw.ResponseTime(mw.SecurityHeaders(mw.Cors(rl.Middleware(mux))))))
+
 	// Create a custom server
 	server := &http.Server{
 		Addr:         fmt.Sprintf(":%d", port),
-		Handler:      mw.Compression(mw.ResponseTime(mw.SecurityHeaders(mw.Cors(rl.Middleware(mux))))),
+		Handler:      secureMux,
 		TLSConfig:    tlsConfig,
 		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){},
 	}
