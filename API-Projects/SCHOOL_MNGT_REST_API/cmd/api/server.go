@@ -138,6 +138,15 @@ func executivesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 
 	case http.MethodPost:
+		fmt.Println("Query:", r.URL.Query())
+		fmt.Println("name:", r.URL.Query().Get("name"))
+
+		// Parse form data (necessary for x-wwww-form-urlencode)
+		if err := r.ParseForm(); err != nil {
+			return
+		}
+		fmt.Println("Form from Post methods:", r.Form)
+
 		w.Write([]byte("Hello POST method on Executives Route"))
 		return
 	case http.MethodPut:
