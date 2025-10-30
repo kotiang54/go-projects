@@ -138,15 +138,6 @@ func executivesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 
 	case http.MethodPost:
-		fmt.Println("Query:", r.URL.Query())
-		fmt.Println("name:", r.URL.Query().Get("name"))
-
-		// Parse form data (necessary for x-wwww-form-urlencode)
-		if err := r.ParseForm(); err != nil {
-			return
-		}
-		fmt.Println("Form from Post methods:", r.Form)
-
 		w.Write([]byte("Hello POST method on Executives Route"))
 		return
 	case http.MethodPut:
@@ -203,7 +194,20 @@ func main() {
 		Whitelist:                  []string{"sortBy", "sortOrder", "age", "name", "class"},
 	}
 
-	secureMux := mw.Hpp(hppOptions)(mw.Compression(mw.ResponseTime(mw.SecurityHeaders(mw.Cors(rl.Middleware(mux))))))
+	// Recommended middleware order (from outermost to innermost)
+	secureMux := mw.Cors( // 1. CORS: Handle cross-origin and preflight requests first
+		mw.Hpp(hppOptions)( // 2. HPP: Sanitize query/body params before any logic uses them
+			rl.Middleware( // 3. Rate Limiting: Block abusive clients early, before expensive work
+				mw.SecurityHeaders( // 4. Security Headers: Set headers for all responses
+					mw.ResponseTime( // 5. Response Time: Measure as much as possible
+						mw.Compression( // 6. Compression: Compress the final response
+							mux, // 7. Your main router/handler
+						),
+					),
+				),
+			),
+		),
+	)
 
 	// Create a custom server
 	server := &http.Server{
