@@ -49,7 +49,9 @@ func clientIP(r *http.Request) string {
 
 // Middleware function to enforce rate limiting based on user/IP addresses
 func (rl *rateLimiter) Middleware(next http.Handler) http.Handler {
+	fmt.Println("Rate Limiter Middleware...")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Rate Limiter Middleware being returned...")
 		// Identify the user/IP (for simplicity, using RemoteAddr here)
 		user := clientIP(r)
 
@@ -64,5 +66,6 @@ func (rl *rateLimiter) Middleware(next http.Handler) http.Handler {
 			return
 		}
 		next.ServeHTTP(w, r)
+		fmt.Println("Rate Limiter Middleware ends...")
 	})
 }
