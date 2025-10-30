@@ -195,18 +195,28 @@ func main() {
 	}
 
 	// Recommended middleware order (from outermost to innermost)
-	secureMux := mw.Cors( // 1. CORS: Handle cross-origin and preflight requests first
-		mw.Hpp(hppOptions)( // 2. HPP: Sanitize query/body params before any logic uses them
-			rl.Middleware( // 3. Rate Limiting: Block abusive clients early, before expensive work
-				mw.SecurityHeaders( // 4. Security Headers: Set headers for all responses
-					mw.ResponseTime( // 5. Response Time: Measure as much as possible
-						mw.Compression( // 6. Compression: Compress the final response
-							mux, // 7. Your main router/handler
-						),
-					),
-				),
-			),
-		),
+	// secureMux := mw.Cors( // 1. CORS: Handle cross-origin and preflight requests first
+	// 	mw.Hpp(hppOptions)( // 2. HPP: Sanitize query/body params before any logic uses them
+	// 		rl.Middleware( // 3. Rate Limiting: Block abusive clients early, before expensive work
+	// 			mw.SecurityHeaders( // 4. Security Headers: Set headers for all responses
+	// 				mw.ResponseTime( // 5. Response Time: Measure as much as possible
+	// 					mw.Compression( // 6. Compression: Compress the final response
+	// 						mux, // 7. Your main router/handler
+	// 					),
+	// 				),
+	// 			),
+	// 		),
+	// 	),
+	// )
+
+	// Using helper function to apply middlewares
+	secureMux := applyMiddlewares(mux,
+		mw.Compression,     // 6. Compression: Compress the final response
+		mw.ResponseTime,    // 5. Response Time: Measure as much as possible
+		mw.SecurityHeaders, // 4. Security Headers: Set headers for all responses
+		rl.Middleware,      // 3. Rate Limiting: Block abusive clients early, before expensive work
+		mw.Hpp(hppOptions), // 2. HPP: Sanitize query/body params before any logic uses them
+		mw.Cors,            // 1. CORS: Handle cross-origin and preflight requests first
 	)
 
 	// Create a custom server
@@ -221,4 +231,14 @@ func main() {
 	if err != nil {
 		log.Fatalln("Error starting the server:", err)
 	}
+}
+
+// Middleware is a function that wraps an http.Handler with additional functionality
+type Middleware func(http.Handler) http.Handler
+
+func applyMiddlewares(handler http.Handler, middlewares ...Middleware) http.Handler {
+	for _, middleware := range middlewares {
+		handler = middleware(handler)
+	}
+	return handler
 }
