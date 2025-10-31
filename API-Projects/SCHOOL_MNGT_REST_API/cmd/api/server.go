@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	mw "school_management_api/internal/api/middlewares"
@@ -20,11 +19,11 @@ type User struct {
 }
 
 type Teacher struct {
-	ID        int
-	FirstName string
-	LastName  string
-	Class     string
-	Subject   string
+	ID        int    `json:"id,omitempty"`
+	FirstName string `json:"first_name,omitempty"`
+	LastName  string `json:"last_name,omitempty"`
+	Class     string `json:"class,omitempty"`
+	Subject   string `json:"subject,omitempty"`
 }
 
 // in-memory slice to hold teachers data
@@ -61,7 +60,7 @@ func init() {
 		Class:     "8C",
 		Subject:   "English",
 	}
-	// nextID++
+	nextID++
 }
 
 func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
@@ -115,6 +114,42 @@ func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(teacher)
 }
 
+func createTeachersHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for creating a new teacher
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	var newTeachers []Teacher
+	err := json.NewDecoder(r.Body).Decode(&newTeachers)
+	if err != nil {
+		http.Error(w, "Invalid input body", http.StatusBadRequest)
+		return
+	}
+
+	addedTeachers := make([]Teacher, len(newTeachers))
+	for i, newTeacher := range newTeachers {
+		newTeacher.ID = nextID
+		teachers[nextID] = newTeacher
+		addedTeachers[i] = newTeacher
+		nextID++
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	// Response structure with status, count, and data
+	response := struct {
+		Status string    `json:"status"`
+		Count  int       `json:"count"`
+		Data   []Teacher `json:"data"`
+	}{
+		Status: "success",
+		Count:  len(addedTeachers),
+		Data:   addedTeachers,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Fprintf(w, "Hello Root Route")
 	w.Write([]byte("Hello Root Route"))
@@ -131,45 +166,8 @@ func teachersHandler(w http.ResponseWriter, r *http.Request) {
 		getTeachersHandler(w, r)
 
 	case http.MethodPost:
-		// Parse RAW Body data
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			return
-		}
-		defer r.Body.Close()
-
-		fmt.Println("RAW Body:", string(body))
-
-		// If you expect a json data, then unmarshall
-		var userInstance User
-		err = json.Unmarshal(body, &userInstance)
-		if err != nil {
-			log.Fatalln("Unmarshall error:", err)
-			return
-		}
-
-		fmt.Println(userInstance)
-		fmt.Println("Receved user name as:", userInstance.Name)
-
-		// Access the request details:
-		fmt.Println("Body:", r.Body)
-		fmt.Println("Form:", r.Form)
-		fmt.Println("Header:", r.Header)
-		fmt.Println("Context:", r.Context())
-		fmt.Println("Host:", r.Host)
-		fmt.Println("Method:", r.Method)
-		fmt.Println("Protocol:", r.Proto)
-		fmt.Println("Remote Address:", r.RemoteAddr)
-		fmt.Println("Request URI:", r.RequestURI)
-		fmt.Println("URL:", r.URL)
-		fmt.Println("Port:", r.URL.Port())
-		fmt.Println("TLS:", r.TLS)
-		fmt.Println("Trailer:", r.Trailer)
-		fmt.Println("User Agent:", r.UserAgent())
-		fmt.Println("Transfer Encoding:", r.TransferEncoding)
-
-		w.Write([]byte("Hello POST method on Teachers Route"))
-		return
+		// Handle POST request to create a new teacher
+		createTeachersHandler(w, r)
 
 	case http.MethodPut:
 		w.Write([]byte("Hello PUT method on Teachers Route"))
