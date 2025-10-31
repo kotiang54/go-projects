@@ -20,9 +20,7 @@ func (rw *responseWriter) WriteHeader(code int) {
 
 // Track the performance for the API
 func ResponseTime(next http.Handler) http.Handler {
-	fmt.Println("Response Time Middleware...")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Response Time Middleware being returned...")
 		start := time.Now()
 
 		// Create a custom ResponseWriter to capture the status code
@@ -35,6 +33,5 @@ func ResponseTime(next http.Handler) http.Handler {
 
 		// Log the request details
 		fmt.Printf("Method: %s, URL: %s, Status: %d, Duration: %v\n", r.Method, r.URL, wrappedWriter.status, duration.String())
-		fmt.Println("Sent Response from Response Writer!")
 	})
 }
