@@ -1,14 +1,11 @@
 package middlewares
 
 import (
-	"fmt"
 	"net/http"
 )
 
 func SecurityHeaders(next http.Handler) http.Handler {
-	fmt.Println("Security Headers Middleware...")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Security Headers Middleware being returned...")
 		h := w.Header()
 
 		// Network / transport
@@ -29,6 +26,5 @@ func SecurityHeaders(next http.Handler) http.Handler {
 		// h.Set("X-XSS-Protection", "1; mode=block")
 
 		next.ServeHTTP(w, r)
-		fmt.Println("Security Headers Middleware ends...")
 	})
 }

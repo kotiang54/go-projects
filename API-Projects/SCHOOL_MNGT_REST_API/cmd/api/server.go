@@ -55,8 +55,8 @@ func init() {
 
 	teachers[nextID] = Teacher{
 		ID:        nextID,
-		FirstName: "Emily",
-		LastName:  "Johnson",
+		FirstName: "Jane",
+		LastName:  "Doe",
 		Class:     "8C",
 		Subject:   "English",
 	}
@@ -64,9 +64,17 @@ func init() {
 }
 
 func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
+	// Handle query parameters for filtering
+	firstName := r.URL.Query().Get("first_name")
+	lastName := r.URL.Query().Get("last_name")
+
 	teacherList := make([]Teacher, 0, len(teachers))
 	for _, teacher := range teachers {
-		teacherList = append(teacherList, teacher)
+		// Simple filtering logic
+		if (firstName == "" || teacher.FirstName == firstName) &&
+			(lastName == "" || teacher.LastName == lastName) {
+			teacherList = append(teacherList, teacher)
+		}
 	}
 	response := struct {
 		Status string    `json:"status"`
