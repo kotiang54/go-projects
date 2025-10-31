@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"school_management_api/internal/api/handlers"
 	mw "school_management_api/internal/api/middlewares"
+	"school_management_api/internal/api/router"
 	"school_management_api/pkg/utils"
 )
 
@@ -17,20 +17,7 @@ func main() {
 	cert := "cert.pem"
 	key := "key.pem"
 
-	// Multiplexer for http routes
-	mux := http.NewServeMux()
-
-	// Create a routes
-	mux.HandleFunc("/", handlers.RootHandler)
-
-	// Teachers route
-	mux.HandleFunc("/teachers/", handlers.TeachersHandler)
-
-	// Students route
-	mux.HandleFunc("/students/", handlers.StudentsHandler)
-
-	// Executives route
-	mux.HandleFunc("/executives/", handlers.ExecutivesHandler)
+	router := router.Router()
 
 	fmt.Println("Server is running on port:", port)
 
@@ -66,7 +53,7 @@ func main() {
 	// )
 
 	// Using helper function to apply middlewares
-	secureMux := utils.ApplyMiddlewares(mux,
+	secureMux := utils.ApplyMiddlewares(router,
 		// mw.Compression,     // 6. Compression: Compress the final response
 		// mw.ResponseTime,    // 5. Response Time: Measure as much as possible
 		mw.SecurityHeaders, // 4. Security Headers: Set headers for all responses
