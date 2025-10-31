@@ -8,8 +8,9 @@ import (
 	"log"
 	"net/http"
 	mw "school_management_api/internal/api/middlewares"
+	"strconv"
+	"strings"
 	"sync"
-	"time"
 )
 
 type User struct {
@@ -64,30 +65,54 @@ func init() {
 }
 
 func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
-	// Handle query parameters for filtering
-	firstName := r.URL.Query().Get("first_name")
-	lastName := r.URL.Query().Get("last_name")
+	// Path parameters can be handled here if needed
+	// e.g. teacherID := chi.URLParam(r, "id")
 
-	teacherList := make([]Teacher, 0, len(teachers))
-	for _, teacher := range teachers {
-		// Simple filtering logic
-		if (firstName == "" || teacher.FirstName == firstName) &&
-			(lastName == "" || teacher.LastName == lastName) {
-			teacherList = append(teacherList, teacher)
+	path := strings.TrimPrefix(r.URL.Path, "/teachers/")
+	teacherIDStr := strings.TrimSuffix(path, "/")
+
+	if teacherIDStr == "" {
+		// Handle query parameters for filtering
+		firstName := r.URL.Query().Get("first_name")
+		lastName := r.URL.Query().Get("last_name")
+
+		teacherList := make([]Teacher, 0, len(teachers))
+		for _, teacher := range teachers {
+			// Simple filtering logic
+			if (firstName == "" || teacher.FirstName == firstName) &&
+				(lastName == "" || teacher.LastName == lastName) {
+				teacherList = append(teacherList, teacher)
+			}
 		}
+
+		response := struct {
+			Status string    `json:"status"`
+			Count  int       `json:"count"`
+			Data   []Teacher `json:"data"`
+		}{
+			Status: "success",
+			Count:  len(teacherList),
+			Data:   teacherList,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
 	}
-	response := struct {
-		Status string    `json:"status"`
-		Count  int       `json:"count"`
-		Data   []Teacher `json:"data"`
-	}{
-		Status: "success",
-		Count:  len(teacherList),
-		Data:   teacherList,
+
+	// Handle Path parameters for specific teacher
+	id, err := strconv.Atoi(teacherIDStr)
+	if err != nil {
+		return
+	}
+
+	teacher, exists := teachers[id]
+	if !exists {
+		http.Error(w, "Teacher not found", http.StatusNotFound)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	json.NewEncoder(w).Encode(teacher)
 }
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -236,15 +261,15 @@ func main() {
 	}
 
 	// rate limiting middleware can be added here
-	rl := mw.NewRateLimiter(5, time.Minute)
+	// rl := mw.NewRateLimiter(5, time.Minute)
 
 	// HPP middleware options configuration
-	hppOptions := mw.HPPOptions{
-		CheckQuery:                 true,
-		CheckBody:                  true,
-		CheckBodyOnlyForContenType: "application/x-www-form-urlencoded",
-		Whitelist:                  []string{"sortBy", "sortOrder", "age", "name", "class"},
-	}
+	// hppOptions := mw.HPPOptions{
+	// 	CheckQuery:                 true,
+	// 	CheckBody:                  true,
+	// 	CheckBodyOnlyForContenType: "application/x-www-form-urlencoded",
+	// 	Whitelist:                  []string{"sortBy", "sortOrder", "first_name", "last_name", "class"},
+	// }
 
 	// Recommended middleware order (from outermost to innermost)
 	// secureMux := mw.Cors( // 1. CORS: Handle cross-origin and preflight requests first
@@ -263,12 +288,12 @@ func main() {
 
 	// Using helper function to apply middlewares
 	secureMux := applyMiddlewares(mux,
-		mw.Compression,     // 6. Compression: Compress the final response
-		mw.ResponseTime,    // 5. Response Time: Measure as much as possible
+		// mw.Compression,     // 6. Compression: Compress the final response
+		// mw.ResponseTime,    // 5. Response Time: Measure as much as possible
 		mw.SecurityHeaders, // 4. Security Headers: Set headers for all responses
-		rl.Middleware,      // 3. Rate Limiting: Block abusive clients early, before expensive work
-		mw.Hpp(hppOptions), // 2. HPP: Sanitize query/body params before any logic uses them
-		mw.Cors,            // 1. CORS: Handle cross-origin and preflight requests first
+		// rl.Middleware,      // 3. Rate Limiting: Block abusive clients early, before expensive work
+		// mw.Hpp(hppOptions), // 2. HPP: Sanitize query/body params before any logic uses them
+		// mw.Cors,            // 1. CORS: Handle cross-origin and preflight requests first
 	)
 
 	// Create a custom server
