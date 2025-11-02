@@ -5,26 +5,43 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	mw "school_management_api/internal/api/middlewares"
 	"school_management_api/internal/api/router"
+	"school_management_api/internal/repository/sqlconnect"
 	"school_management_api/pkg/utils"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	// Main entry of the api
 
-	port := 3000
+	// Load environment variables from .env file
+	if err := godotenv.Load(); err != nil {
+		return
+	}
+
+	dbName := os.Getenv("DB_NAME")
+	_, err := sqlconnect.ConnectDb(dbName)
+	if err != nil {
+		log.Fatalln("Database connection error:", err)
+	}
+
+	port := os.Getenv("API_PORT")
 	cert := "cert.pem"
 	key := "key.pem"
 
-	router := router.Router()
-
-	fmt.Println("Server is running on port:", port)
+	// Log the server startup
+	fmt.Println("Server is running on port", port)
 
 	// Make HTTP 1.1 with TLS server
 	tlsConfig := &tls.Config{
 		MinVersion: tls.VersionTLS13,
 	}
+
+	// Initialize the router
+	router := router.Router()
 
 	// rate limiting middleware can be added here
 	// rl := mw.NewRateLimiter(5, time.Minute)
@@ -64,13 +81,13 @@ func main() {
 
 	// Create a custom server
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", port),
+		Addr:         port,
 		Handler:      secureMux,
 		TLSConfig:    tlsConfig,
 		TLSNextProto: map[string]func(*http.Server, *tls.Conn, http.Handler){},
 	}
 
-	err := server.ListenAndServeTLS(cert, key)
+	err = server.ListenAndServeTLS(cert, key)
 	if err != nil {
 		log.Fatalln("Error starting the server:", err)
 	}
