@@ -9,6 +9,7 @@
 *.cnf
 *.pem
 *.key
+.env
 
 # Test binary files
 *.test
