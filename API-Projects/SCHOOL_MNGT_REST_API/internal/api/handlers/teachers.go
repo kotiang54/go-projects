@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"school_management_api/internal/models"
 	"school_management_api/internal/repository/sqlconnect"
 	"strconv"
@@ -76,6 +76,14 @@ func TeachersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
+
+	db, err := sqlconnect.ConnectDb()
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
 	// Path parameters can be handled here if needed
 	// e.g. teacherID := chi.URLParam(r, "id")
 
@@ -116,10 +124,15 @@ func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	teacher, exists := teachers[id]
-	if !exists {
+	var teacher models.Teacher
+	err = db.QueryRow("SELECT id, first_name, last_name, email, class, subject FROM teachers WHERE id = ?", id).
+		Scan(&teacher.ID, &teacher.FirstName, &teacher.LastName, &teacher.Email, &teacher.Class, &teacher.Subject)
+
+	if err == sql.ErrNoRows {
 		http.Error(w, "Teacher not found", http.StatusNotFound)
 		return
+	} else if err != nil {
+		http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -128,8 +141,7 @@ func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
 func createTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
-	dbName := os.Getenv("DB_NAME")
-	db, err := sqlconnect.ConnectDb(dbName)
+	db, err := sqlconnect.ConnectDb()
 	if err != nil {
 		http.Error(w, "Database connection error", http.StatusInternalServerError)
 		return
