@@ -12,41 +12,41 @@ import (
 )
 
 // in-memory slice to hold teachers data
-var (
-	teachers = make(map[int]models.Teacher)
-	// mutex    = &sync.Mutex{}
-	nextID = 1
-)
+// var (
+// 	teachers = make(map[int]models.Teacher)
+// 	// mutex    = &sync.Mutex{}
+// 	nextID = 1
+// )
 
-// Initialize dummy data
-func init() {
-	teachers[nextID] = models.Teacher{
-		ID:        nextID,
-		FirstName: "John",
-		LastName:  "Doe",
-		Class:     "9A",
-		Subject:   "Mathematics",
-	}
-	nextID++
+// // Initialize dummy data
+// func init() {
+// 	teachers[nextID] = models.Teacher{
+// 		ID:        nextID,
+// 		FirstName: "John",
+// 		LastName:  "Doe",
+// 		Class:     "9A",
+// 		Subject:   "Mathematics",
+// 	}
+// 	nextID++
 
-	teachers[nextID] = models.Teacher{
-		ID:        nextID,
-		FirstName: "Jane",
-		LastName:  "Smith",
-		Class:     "10B",
-		Subject:   "Science",
-	}
-	nextID++
+// 	teachers[nextID] = models.Teacher{
+// 		ID:        nextID,
+// 		FirstName: "Jane",
+// 		LastName:  "Smith",
+// 		Class:     "10B",
+// 		Subject:   "Science",
+// 	}
+// 	nextID++
 
-	teachers[nextID] = models.Teacher{
-		ID:        nextID,
-		FirstName: "Jane",
-		LastName:  "Doe",
-		Class:     "8C",
-		Subject:   "English",
-	}
-	nextID++
-}
+// 	teachers[nextID] = models.Teacher{
+// 		ID:        nextID,
+// 		FirstName: "Jane",
+// 		LastName:  "Doe",
+// 		Class:     "8C",
+// 		Subject:   "English",
+// 	}
+// 	nextID++
+// }
 
 func TeachersHandler(w http.ResponseWriter, r *http.Request) {
 	// Path parameters e.g. /teachers/{id}
@@ -94,14 +94,44 @@ func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		// Handle query parameters for filtering
 		firstName := r.URL.Query().Get("first_name")
 		lastName := r.URL.Query().Get("last_name")
+		// class := r.URL.Query().Get("class")
 
-		teacherList := make([]models.Teacher, 0, len(teachers))
-		for _, teacher := range teachers {
-			// Simple filtering logic
-			if (firstName == "" || teacher.FirstName == firstName) &&
-				(lastName == "" || teacher.LastName == lastName) {
-				teacherList = append(teacherList, teacher)
+		// Build the SQL query with filters
+		query := "SELECT * FROM teachers WHERE 1=1" // id, first_name, last_name, email, class, subject
+		var args []interface{}
+
+		if firstName != "" {
+			query += " AND first_name = ?"
+			args = append(args, firstName)
+		}
+
+		if lastName != "" {
+			query += " AND last_name = ?"
+			args = append(args, lastName)
+		}
+
+		// if class != "" {
+		// 	query += " AND class = ?"
+		// 	args = append(args, class)
+		// }
+
+		// Execute the query
+		rows, err := db.Query(query, args...)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		defer rows.Close()
+
+		teacherList := make([]models.Teacher, 0)
+		for rows.Next() {
+			var teacher models.Teacher
+			if err := rows.Scan(&teacher.ID, &teacher.FirstName, &teacher.LastName, &teacher.Email, &teacher.Class, &teacher.Subject); err != nil {
+				http.Error(w, fmt.Sprintf("Database scan error: %v", err), http.StatusInternalServerError)
+				return
 			}
+			teacherList = append(teacherList, teacher)
 		}
 
 		response := struct {
@@ -125,7 +155,8 @@ func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var teacher models.Teacher
-	err = db.QueryRow("SELECT id, first_name, last_name, email, class, subject FROM teachers WHERE id = ?", id).
+	query := "SELECT * FROM teachers WHERE id = ?" // id, first_name, last_name, email, class, subject
+	err = db.QueryRow(query, id).
 		Scan(&teacher.ID, &teacher.FirstName, &teacher.LastName, &teacher.Email, &teacher.Class, &teacher.Subject)
 
 	if err == sql.ErrNoRows {
