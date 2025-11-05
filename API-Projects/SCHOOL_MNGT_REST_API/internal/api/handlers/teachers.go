@@ -11,43 +11,6 @@ import (
 	"strings"
 )
 
-// in-memory slice to hold teachers data
-// var (
-// 	teachers = make(map[int]models.Teacher)
-// 	// mutex    = &sync.Mutex{}
-// 	nextID = 1
-// )
-
-// // Initialize dummy data
-// func init() {
-// 	teachers[nextID] = models.Teacher{
-// 		ID:        nextID,
-// 		FirstName: "John",
-// 		LastName:  "Doe",
-// 		Class:     "9A",
-// 		Subject:   "Mathematics",
-// 	}
-// 	nextID++
-
-// 	teachers[nextID] = models.Teacher{
-// 		ID:        nextID,
-// 		FirstName: "Jane",
-// 		LastName:  "Smith",
-// 		Class:     "10B",
-// 		Subject:   "Science",
-// 	}
-// 	nextID++
-
-// 	teachers[nextID] = models.Teacher{
-// 		ID:        nextID,
-// 		FirstName: "Jane",
-// 		LastName:  "Doe",
-// 		Class:     "8C",
-// 		Subject:   "English",
-// 	}
-// 	nextID++
-// }
-
 func TeachersHandler(w http.ResponseWriter, r *http.Request) {
 	// Path parameters e.g. /teachers/{id}
 	// Query parameters e.g. /teachers/?key=value&query=value2&sortBy=email&sortOrder=ASC
@@ -91,34 +54,21 @@ func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	teacherIDStr := strings.TrimSuffix(path, "/")
 
 	if teacherIDStr == "" {
-		// Handle query parameters for filtering
-		firstName := r.URL.Query().Get("first_name")
-		lastName := r.URL.Query().Get("last_name")
-		// class := r.URL.Query().Get("class")
 
 		// Build the SQL query with filters
 		query := "SELECT * FROM teachers WHERE 1=1" // id, first_name, last_name, email, class, subject
 		var args []interface{}
 
-		if firstName != "" {
-			query += " AND first_name = ?"
-			args = append(args, firstName)
-		}
+		// Add filters based on query parameters
+		query, args = addFilters(r, query, args)
 
-		if lastName != "" {
-			query += " AND last_name = ?"
-			args = append(args, lastName)
-		}
-
-		// if class != "" {
-		// 	query += " AND class = ?"
-		// 	args = append(args, class)
-		// }
+		// Example: /teachers/?sortby=last_name:asc&sortby=class:desc
+		query += buildOrderByClause(r)
 
 		// Execute the query
 		rows, err := db.Query(query, args...)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("Database Query Error: %v", err), http.StatusInternalServerError)
 			return
 		}
 
@@ -179,10 +129,6 @@ func createTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Implementation for creating a new teacher
-	// mutex.Lock()
-	// defer mutex.Unlock()
-
 	var newTeachers []models.Teacher
 	err = json.NewDecoder(r.Body).Decode(&newTeachers)
 	if err != nil {
@@ -231,4 +177,49 @@ func createTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(response)
+}
+
+// addFilters adds filtering conditions to the SQL query based on URL query parameters.
+func addFilters(r *http.Request, query string, args []interface{}) (string, []interface{}) {
+	// Handle Query parameters for filtering
+	params := map[string]string{
+		"first_name": "first_name",
+		"last_name":  "last_name",
+		"email":      "email",
+		"class":      "class",
+		"subject":    "subject",
+	}
+
+	for param, dbField := range params {
+		value := r.URL.Query().Get(param)
+		if value != "" {
+			query += fmt.Sprintf(" AND %s = ?", dbField)
+			args = append(args, value)
+		}
+	}
+	return query, args
+}
+
+// Extracted function for building ORDER BY clause from sortby query parameters
+func buildOrderByClause(r *http.Request) string {
+	sortParams := r.URL.Query()["sortby"]
+	if len(sortParams) == 0 {
+		return ""
+	}
+	orderBy := " ORDER BY "
+	for i, param := range sortParams {
+		parts := strings.Split(param, ":")
+		if len(parts) == 2 {
+			field := parts[0]
+			order := strings.ToUpper(parts[1])
+			if order != "ASC" && order != "DESC" {
+				order = "ASC"
+			}
+			if i > 0 {
+				orderBy += ", "
+			}
+			orderBy += fmt.Sprintf("%s %s", field, order)
+		}
+	}
+	return orderBy
 }
