@@ -62,6 +62,9 @@ func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		// Add filters based on query parameters
 		query, args = addFilters(r, query, args)
 
+		// Example: /teachers/?sortby=last_name:asc&sortby=class:desc
+		query += buildOrderByClause(r)
+
 		// Execute the query
 		rows, err := db.Query(query, args...)
 		if err != nil {
@@ -125,10 +128,6 @@ func createTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer db.Close()
-
-	// Implementation for creating a new teacher
-	// mutex.Lock()
-	// defer mutex.Unlock()
 
 	var newTeachers []models.Teacher
 	err = json.NewDecoder(r.Body).Decode(&newTeachers)
@@ -199,4 +198,28 @@ func addFilters(r *http.Request, query string, args []interface{}) (string, []in
 		}
 	}
 	return query, args
+}
+
+// Extracted function for building ORDER BY clause from sortby query parameters
+func buildOrderByClause(r *http.Request) string {
+	sortParams := r.URL.Query()["sortby"]
+	if len(sortParams) == 0 {
+		return ""
+	}
+	orderBy := " ORDER BY "
+	for i, param := range sortParams {
+		parts := strings.Split(param, ":")
+		if len(parts) == 2 {
+			field := parts[0]
+			order := strings.ToUpper(parts[1])
+			if order != "ASC" && order != "DESC" {
+				order = "ASC"
+			}
+			if i > 0 {
+				orderBy += ", "
+			}
+			orderBy += fmt.Sprintf("%s %s", field, order)
+		}
+	}
+	return orderBy
 }
