@@ -2,18 +2,20 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"school_management_api/internal/models"
+	"school_management_api/internal/repository/sqlconnect"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 // in-memory slice to hold teachers data
 var (
 	teachers = make(map[int]models.Teacher)
-	mutex    = &sync.Mutex{}
-	nextID   = 1
+	// mutex    = &sync.Mutex{}
+	nextID = 1
 )
 
 // Initialize dummy data
@@ -125,23 +127,50 @@ func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func createTeachersHandler(w http.ResponseWriter, r *http.Request) {
+
+	dbName := os.Getenv("DB_NAME")
+	db, err := sqlconnect.ConnectDb(dbName)
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
 	// Implementation for creating a new teacher
-	mutex.Lock()
-	defer mutex.Unlock()
+	// mutex.Lock()
+	// defer mutex.Unlock()
 
 	var newTeachers []models.Teacher
-	err := json.NewDecoder(r.Body).Decode(&newTeachers)
+	err = json.NewDecoder(r.Body).Decode(&newTeachers)
 	if err != nil {
-		http.Error(w, "Invalid input body", http.StatusBadRequest)
+		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
 		return
 	}
 
+	stmt, err := db.Prepare("INSERT INTO teachers (first_name, last_name, email, class, subject) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to prepare SQL statement: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
 	addedTeachers := make([]models.Teacher, len(newTeachers))
 	for i, newTeacher := range newTeachers {
-		newTeacher.ID = nextID
-		teachers[nextID] = newTeacher
+		res, err := stmt.Exec(newTeacher.FirstName, newTeacher.LastName, newTeacher.Email, newTeacher.Class, newTeacher.Subject)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to insert teacher: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		// Get the last inserted ID
+		lastId, err := res.LastInsertId()
+		if err != nil {
+			http.Error(w, "Failed to retrieve last insert ID", http.StatusInternalServerError)
+			return
+		}
+
+		newTeacher.ID = int(lastId)
 		addedTeachers[i] = newTeacher
-		nextID++
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -157,5 +186,6 @@ func createTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		Count:  len(addedTeachers),
 		Data:   addedTeachers,
 	}
+
 	json.NewEncoder(w).Encode(response)
 }
