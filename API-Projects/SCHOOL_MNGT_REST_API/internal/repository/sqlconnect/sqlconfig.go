@@ -9,7 +9,7 @@ import (
 )
 
 // ConnectDb establishes a connection to the MariaDB database with the given name.
-func ConnectDb(dbname string) (*sql.DB, error) {
+func ConnectDb() (*sql.DB, error) {
 
 	// Load environment variables from .env file
 	// if err := godotenv.Load(); err != nil {
@@ -21,6 +21,7 @@ func ConnectDb(dbname string) (*sql.DB, error) {
 	password := os.Getenv("DB_PASSWORD")
 	host := os.Getenv("HOST")
 	dbport := os.Getenv("DB_PORT")
+	dbname := os.Getenv("DB_NAME")
 
 	// Data Source Name (DSN) format: username:password@protocol(address)/dbname
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, password, host, dbport, dbname)

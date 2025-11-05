@@ -22,8 +22,7 @@ func main() {
 		return
 	}
 
-	dbName := os.Getenv("DB_NAME")
-	_, err := sqlconnect.ConnectDb(dbName)
+	_, err := sqlconnect.ConnectDb()
 	if err != nil {
 		log.Fatalln("Database connection error:", err)
 	}
