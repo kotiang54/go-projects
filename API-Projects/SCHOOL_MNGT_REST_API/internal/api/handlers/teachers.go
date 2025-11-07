@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"school_management_api/internal/models"
 	"school_management_api/internal/repository/sqlconnect"
 	"strconv"
@@ -368,19 +369,19 @@ func patchTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// update the records
-	for field, value := range updatedFields {
-		switch field {
-		case "first_name":
-			existingTeacher.FirstName = value.(string)
-		case "last_name":
-			existingTeacher.LastName = value.(string)
-		case "email":
-			existingTeacher.Email = value.(string)
-		case "class":
-			existingTeacher.Class = value.(string)
-		case "subject":
-			existingTeacher.Subject = value.(string)
+	// use reflect to update only provided fields
+	teacherValue := reflect.ValueOf(&existingTeacher).Elem()
+	teacherType := teacherValue.Type()
+
+	for key, value := range updatedFields {
+		for i := 0; i < teacherValue.NumField(); i++ {
+			field := teacherType.Field(i)
+			if field.Tag.Get("json") == key+",omitempty" {
+				if teacherValue.Field(i).CanSet() {
+					fieldVal := teacherValue.Field(i)
+					fieldVal.Set(reflect.ValueOf(value).Convert(fieldVal.Type()))
+				}
+			}
 		}
 	}
 
