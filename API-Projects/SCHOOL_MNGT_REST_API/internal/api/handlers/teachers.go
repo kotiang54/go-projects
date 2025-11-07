@@ -29,8 +29,8 @@ func TeachersHandler(w http.ResponseWriter, r *http.Request) {
 		updateTeachersHandler(w, r)
 
 	case http.MethodPatch:
-		w.Write([]byte("Hello PATCH method on Teachers Route"))
-		return
+		// Handle PATCH request to partially update teacher records
+		patchTeachersHandler(w, r)
 
 	case http.MethodDelete:
 		w.Write([]byte("Hello DELETE method on Teachers Route"))
@@ -320,4 +320,83 @@ func updateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(response)
+}
+
+func patchTeachersHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for PATCH method to partially update teacher records
+	// get the teacher id and validate that it exists
+	path := strings.TrimPrefix(r.URL.Path, "/teachers/")
+	idStr := strings.TrimSuffix(path, "/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid Teacher ID: %s", idStr), http.StatusBadRequest)
+		return
+	}
+
+	// fields from the request body for update
+	var updatedFields map[string]interface{}
+	err = json.NewDecoder(r.Body).Decode(&updatedFields)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to decode request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// connect to database
+	db, err := sqlconnect.ConnectDb()
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	defer func() {
+		if db != nil {
+			db.Close()
+		}
+	}()
+
+	// get existing teacher on id
+	var existingTeacher models.Teacher
+	query := "SELECT * FROM teachers WHERE id = ?"
+	err = db.QueryRow(query, id).
+		Scan(&existingTeacher.ID, &existingTeacher.FirstName, &existingTeacher.LastName, &existingTeacher.Email, &existingTeacher.Class, &existingTeacher.Subject)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Teacher not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// update the records
+	for field, value := range updatedFields {
+		switch field {
+		case "first_name":
+			existingTeacher.FirstName = value.(string)
+		case "last_name":
+			existingTeacher.LastName = value.(string)
+		case "email":
+			existingTeacher.Email = value.(string)
+		case "class":
+			existingTeacher.Class = value.(string)
+		case "subject":
+			existingTeacher.Subject = value.(string)
+		}
+	}
+
+	const updateTeacherQuery = `
+		UPDATE teachers
+		SET first_name = ?, last_name = ?, email = ?, class = ?, subject = ?
+		WHERE id = ?`
+
+	// updatedTeacher.ID = existingTeacher.ID
+	_, err = db.Exec(updateTeacherQuery, existingTeacher.FirstName, existingTeacher.LastName, existingTeacher.Email, existingTeacher.Class, existingTeacher.Subject, existingTeacher.ID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to update teacher: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// return a response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(existingTeacher)
 }
