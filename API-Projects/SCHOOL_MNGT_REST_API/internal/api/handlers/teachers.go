@@ -45,7 +45,11 @@ func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Database connection error", http.StatusInternalServerError)
 		return
 	}
-	defer db.Close()
+	defer func() {
+		if db != nil {
+			db.Close()
+		}
+	}()
 
 	// Path parameters can be handled here if needed
 	// e.g. teacherID := chi.URLParam(r, "id")
@@ -109,11 +113,13 @@ func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	err = db.QueryRow(query, id).
 		Scan(&teacher.ID, &teacher.FirstName, &teacher.LastName, &teacher.Email, &teacher.Class, &teacher.Subject)
 
-	if err == sql.ErrNoRows {
-		http.Error(w, "Teacher not found", http.StatusNotFound)
-		return
-	} else if err != nil {
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, fmt.Sprintf("Teacher not found with ID: %d", id), http.StatusNotFound)
+			return
+		}
 		http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -127,7 +133,11 @@ func createTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Database connection error", http.StatusInternalServerError)
 		return
 	}
-	defer db.Close()
+	defer func() {
+		if db != nil {
+			db.Close()
+		}
+	}()
 
 	var newTeachers []models.Teacher
 	err = json.NewDecoder(r.Body).Decode(&newTeachers)
@@ -224,6 +234,90 @@ func buildOrderByClause(r *http.Request) string {
 	return orderBy
 }
 
-func updateTeacherHandler(w http.ResponseWriter, r *http.Request) {
-	// Implementation for updating a teacher
+// updateTeachersHandler handles updating an existing teacher
+func updateTeachersHandler(w http.ResponseWriter, r *http.Request) {
+	// get teachers id from path
+	path := strings.TrimPrefix(r.URL.Path, "/teachers/")
+	idStr := strings.TrimSuffix(path, "/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid Teacher ID: %s", idStr), http.StatusBadRequest)
+		return
+	}
+
+	// create updated teacher variable from request body
+	var updatedTeacher models.Teacher
+	err = json.NewDecoder(r.Body).Decode(&updatedTeacher)
+	if err != nil {
+		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
+		return
+	}
+
+	// Validate the updatedTeacher fields
+	if updatedTeacher.FirstName == "" || updatedTeacher.LastName == "" || updatedTeacher.Email == "" || updatedTeacher.Class == "" || updatedTeacher.Subject == "" {
+		http.Error(w, "All fields (first_name, last_name, email, class, subject) are required", http.StatusBadRequest)
+		return
+	}
+
+	// update teacher in database
+	db, err := sqlconnect.ConnectDb()
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	defer func() {
+		if db != nil {
+			db.Close()
+		}
+	}()
+
+	// get the existing teacher from database
+	query := "SELECT * FROM teachers WHERE id = ?"
+	var existingTeacher models.Teacher
+	err = db.QueryRow(query, id).
+		Scan(&existingTeacher.ID, &existingTeacher.FirstName, &existingTeacher.LastName, &existingTeacher.Email, &existingTeacher.Class, &existingTeacher.Subject)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Teacher not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Check if there are any changes before updating
+	if updatedTeacher.FirstName == existingTeacher.FirstName &&
+		updatedTeacher.LastName == existingTeacher.LastName &&
+		updatedTeacher.Email == existingTeacher.Email &&
+		updatedTeacher.Class == existingTeacher.Class &&
+		updatedTeacher.Subject == existingTeacher.Subject {
+
+		http.Error(w, "No changes detected in the teacher's details", http.StatusBadRequest)
+		return
+	}
+
+	const updateTeacherQuery = `
+		UPDATE teachers
+		SET first_name = ?, last_name = ?, email = ?, class = ?, subject = ?
+		WHERE id = ?`
+
+	updatedTeacher.ID = existingTeacher.ID
+	_, err = db.Exec(updateTeacherQuery, updatedTeacher.FirstName, updatedTeacher.LastName, updatedTeacher.Email, updatedTeacher.Class, updatedTeacher.Subject, updatedTeacher.ID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to update teacher: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// return updated teacher with status field
+	w.Header().Set("Content-Type", "application/json")
+	response := struct {
+		Status string         `json:"status"`
+		Data   models.Teacher `json:"data"`
+	}{
+		Status: "success",
+		Data:   updatedTeacher,
+	}
+
+	json.NewEncoder(w).Encode(response)
 }
