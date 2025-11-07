@@ -25,8 +25,8 @@ func TeachersHandler(w http.ResponseWriter, r *http.Request) {
 		createTeachersHandler(w, r)
 
 	case http.MethodPut:
-		w.Write([]byte("Hello PUT method on Teachers Route"))
-		return
+		// Handle PUT request to update an existing teacher
+		updateTeachersHandler(w, r)
 
 	case http.MethodPatch:
 		w.Write([]byte("Hello PATCH method on Teachers Route"))
@@ -56,7 +56,7 @@ func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	if teacherIDStr == "" {
 
 		// Build the SQL query with filters
-		query := "SELECT * FROM teachers WHERE 1=1" // id, first_name, last_name, email, class, subject
+		query := "SELECT * FROM teachers WHERE 1=1" // * id, first_name, last_name, email, class, subject
 		var args []interface{}
 
 		// Add filters based on query parameters
@@ -222,4 +222,8 @@ func buildOrderByClause(r *http.Request) string {
 		}
 	}
 	return orderBy
+}
+
+func updateTeacherHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for updating a teacher
 }
