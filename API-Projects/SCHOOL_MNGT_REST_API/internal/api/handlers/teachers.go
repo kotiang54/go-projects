@@ -323,9 +323,9 @@ func updateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// patchTeachersHandler handles PATCH requests to partially update teacher records
 func patchTeachersHandler(w http.ResponseWriter, r *http.Request) {
-	// Implementation for PATCH method to partially update teacher records
-	// get the teacher id and validate that it exists
+	// Get the teacher id from the path
 	path := strings.TrimPrefix(r.URL.Path, "/teachers/")
 	idStr := strings.TrimSuffix(path, "/")
 	id, err := strconv.Atoi(idStr)
@@ -334,7 +334,7 @@ func patchTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// fields from the request body for update
+	// Decode fields to update from request body
 	var updatedFields map[string]interface{}
 	err = json.NewDecoder(r.Body).Decode(&updatedFields)
 	if err != nil {
@@ -342,24 +342,19 @@ func patchTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// connect to database
+	// Connect to database
 	db, err := sqlconnect.ConnectDb()
 	if err != nil {
 		http.Error(w, "Database connection error", http.StatusInternalServerError)
 		return
 	}
-	defer func() {
-		if db != nil {
-			db.Close()
-		}
-	}()
+	defer db.Close()
 
-	// get existing teacher on id
+	// Get existing teacher by id
 	var existingTeacher models.Teacher
 	query := "SELECT * FROM teachers WHERE id = ?"
 	err = db.QueryRow(query, id).
 		Scan(&existingTeacher.ID, &existingTeacher.FirstName, &existingTeacher.LastName, &existingTeacher.Email, &existingTeacher.Class, &existingTeacher.Subject)
-
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "Teacher not found", http.StatusNotFound)
@@ -369,35 +364,54 @@ func patchTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// use reflect to update only provided fields
-	teacherValue := reflect.ValueOf(&existingTeacher).Elem()
-	teacherType := teacherValue.Type()
-
-	for key, value := range updatedFields {
-		for i := 0; i < teacherValue.NumField(); i++ {
-			field := teacherType.Field(i)
-			if field.Tag.Get("json") == key+",omitempty" {
-				if teacherValue.Field(i).CanSet() {
-					fieldVal := teacherValue.Field(i)
-					fieldVal.Set(reflect.ValueOf(value).Convert(fieldVal.Type()))
-				}
-			}
+	// Validate fields to update
+	teacherType := reflect.TypeOf(existingTeacher)
+	validFields := make(map[string]int)
+	for i := 0; i < teacherType.NumField(); i++ {
+		jsonTag := strings.Split(teacherType.Field(i).Tag.Get("json"), ",")[0]
+		if jsonTag != "" {
+			validFields[jsonTag] = i
 		}
 	}
 
-	const updateTeacherQuery = `
-		UPDATE teachers
-		SET first_name = ?, last_name = ?, email = ?, class = ?, subject = ?
-		WHERE id = ?`
+	// Build update query and args
+	var updateFields []string
+	var updateArgs []interface{}
+	for key, value := range updatedFields {
+		fieldIdx, ok := validFields[key]
+		if !ok {
+			http.Error(w, fmt.Sprintf("Invalid field: %s", key), http.StatusBadRequest)
+			return
+		}
+		updateFields = append(updateFields, fmt.Sprintf("%s = ?", key))
+		updateArgs = append(updateArgs, value)
 
-	// updatedTeacher.ID = existingTeacher.ID
-	_, err = db.Exec(updateTeacherQuery, existingTeacher.FirstName, existingTeacher.LastName, existingTeacher.Email, existingTeacher.Class, existingTeacher.Subject, existingTeacher.ID)
+		// Update the struct field using reflection
+		fieldVal := reflect.ValueOf(&existingTeacher).Elem().Field(fieldIdx)
+		val := reflect.ValueOf(value)
+		if val.Type().ConvertibleTo(fieldVal.Type()) {
+			fieldVal.Set(val.Convert(fieldVal.Type()))
+		} else {
+			http.Error(w, fmt.Sprintf("Type mismatch for field: %s", key), http.StatusBadRequest)
+			return
+		}
+	}
+
+	if len(updateFields) == 0 {
+		http.Error(w, "No valid fields provided for update", http.StatusBadRequest)
+		return
+	}
+
+	updateArgs = append(updateArgs, existingTeacher.ID)
+	updateTeacherQuery := fmt.Sprintf("UPDATE teachers SET %s WHERE id = ?", strings.Join(updateFields, ", "))
+
+	_, err = db.Exec(updateTeacherQuery, updateArgs...)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to update teacher: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	// return a response
+	// Return the updated teacher
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(existingTeacher)
 }
