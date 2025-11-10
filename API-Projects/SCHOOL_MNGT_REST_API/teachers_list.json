@@ -1,0 +1,93 @@
+[
+    {
+        "first_name": "Jeniffer",
+        "last_name": "Smith",
+        "email": "jsmith@school.ac.edu",
+        "class": "9B",
+        "subject": "English"
+    },
+    {
+        "first_name": "Michael",
+        "last_name": "Doe",
+        "email": "dmike@school.ac.edu",
+        "class": "8A",
+        "subject": "Geography"
+    },
+    {
+        "first_name": "Carlson",
+        "last_name": "Sunny",
+        "email": "csunny@school.ac.edu",
+        "class": "6B",
+        "subject": "STEM Lab"
+    },
+    {
+        "first_name": "Olga",
+        "last_name": "Smith",
+        "email": "osmith@school.ac.edu",
+        "class": "9C",
+        "subject": "Literature"
+    },
+    {
+        "first_name": "Austin",
+        "last_name": "Friday",
+        "email": "afriday@school.ac.edu",
+        "class": "9C",
+        "subject": "Math"
+    },
+    {
+        "first_name": "Jonathan",
+        "last_name": "Brant",
+        "email": "dbrant@school.ac.edu",
+        "class": "7A",
+        "subject": "Literature"
+    },
+    {
+        "first_name": "Joyce",
+        "last_name": "Sun",
+        "email": "jsun@school.ac.edu",
+        "class": "6A",
+        "subject": "STEM Lab"
+    },
+    {
+        "first_name": "Timothy",
+        "last_name": "Odindi",
+        "email": "todindi@school.ac.edu",
+        "class": "9A",
+        "subject": "History"
+    },
+    {
+        "first_name": "Lee",
+        "last_name": "Jingwoon",
+        "email": "ljingwoon@school.ac.edu",
+        "class": "6A",
+        "subject": "English"
+    },
+    {
+        "first_name": "Kennedy",
+        "last_name": "Smith",
+        "email": "ksmith@school.ac.edu",
+        "class": "9B",
+        "subject": "Math"
+    },
+    {
+        "first_name": "Otieno",
+        "last_name": "Owiti",
+        "email": "oowiti@school.ac.edu",
+        "class": "6B",
+        "subject": "Swahili"
+    },
+    {
+        "first_name": "Phong",
+        "last_name": "Tseng",
+        "email": "ptseng@school.ac.edu",
+        "class": "8A",
+        "subject": "Literature"
+    },
+    {
+        "first_name": "Latisha",
+        "last_name": "Monday",
+        "email": "lmonday@school.ac.edu",
+        "class": "9A",
+        "subject": "History"
+    }
+]
