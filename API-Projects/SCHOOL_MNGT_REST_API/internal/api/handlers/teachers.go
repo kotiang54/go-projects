@@ -12,6 +12,19 @@ import (
 	"strings"
 )
 
+// Add this interface for query compatibility
+type queryer interface {
+	QueryRow(query string, args ...interface{}) *sql.Row
+}
+
+type dbHandler struct {
+	db *sql.DB
+}
+
+func (h *dbHandler) QueryRow(query string, args ...interface{}) *sql.Row {
+	return h.db.QueryRow(query, args...)
+}
+
 // GetTeachersHandler handles GET requests to fetch teachers
 func GetTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -69,8 +82,8 @@ func GetTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// GetTeacherHandler handles GET requests to fetch a specific teacher
-func GetTeacherHandler(w http.ResponseWriter, r *http.Request) {
+// GetOneTeacherHandler handles GET requests to fetch a specific teacher
+func GetOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 
 	db, err := sqlconnect.ConnectDb()
 	if err != nil {
@@ -82,9 +95,6 @@ func GetTeacherHandler(w http.ResponseWriter, r *http.Request) {
 			db.Close()
 		}
 	}()
-
-	// Path parameters can be handled here if needed
-	// e.g. teacherID := chi.URLParam(r, "id")
 
 	teacherIDStr := r.PathValue("id")
 
@@ -110,51 +120,6 @@ func GetTeacherHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(teacher)
-}
-
-// addFilters adds filtering conditions to the SQL query based on URL query parameters.
-func addFilters(r *http.Request, query string, args []interface{}) (string, []interface{}) {
-	// Handle Query parameters for filtering
-	params := map[string]string{
-		"first_name": "first_name",
-		"last_name":  "last_name",
-		"email":      "email",
-		"class":      "class",
-		"subject":    "subject",
-	}
-
-	for param, dbField := range params {
-		value := r.URL.Query().Get(param)
-		if value != "" {
-			query += fmt.Sprintf(" AND %s = ?", dbField)
-			args = append(args, value)
-		}
-	}
-	return query, args
-}
-
-// Extracted function for building ORDER BY clause from sortby query parameters
-func buildOrderByClause(r *http.Request) string {
-	sortParams := r.URL.Query()["sortby"]
-	if len(sortParams) == 0 {
-		return ""
-	}
-	orderBy := " ORDER BY "
-	for i, param := range sortParams {
-		parts := strings.Split(param, ":")
-		if len(parts) == 2 {
-			field := parts[0]
-			order := strings.ToUpper(parts[1])
-			if order != "ASC" && order != "DESC" {
-				order = "ASC"
-			}
-			if i > 0 {
-				orderBy += ", "
-			}
-			orderBy += fmt.Sprintf("%s %s", field, order)
-		}
-	}
-	return orderBy
 }
 
 // CreateTeachersHandler handles the creation of new teachers
@@ -224,8 +189,7 @@ func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 // UpdateTeachersHandler handles updating an existing teacher
 func UpdateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	// get teachers id from path
-	path := strings.TrimPrefix(r.URL.Path, "/teachers/")
-	idStr := strings.TrimSuffix(path, "/")
+	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid Teacher ID: %s", idStr), http.StatusBadRequest)
@@ -260,9 +224,9 @@ func UpdateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
 	// get the existing teacher from database
 	query := "SELECT * FROM teachers WHERE id = ?"
-	var existingTeacher models.Teacher
+	var teacherToUpdate models.Teacher
 	err = db.QueryRow(query, id).
-		Scan(&existingTeacher.ID, &existingTeacher.FirstName, &existingTeacher.LastName, &existingTeacher.Email, &existingTeacher.Class, &existingTeacher.Subject)
+		Scan(&teacherToUpdate.ID, &teacherToUpdate.FirstName, &teacherToUpdate.LastName, &teacherToUpdate.Email, &teacherToUpdate.Class, &teacherToUpdate.Subject)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -274,11 +238,11 @@ func UpdateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if there are any changes before updating
-	if updatedTeacher.FirstName == existingTeacher.FirstName &&
-		updatedTeacher.LastName == existingTeacher.LastName &&
-		updatedTeacher.Email == existingTeacher.Email &&
-		updatedTeacher.Class == existingTeacher.Class &&
-		updatedTeacher.Subject == existingTeacher.Subject {
+	if updatedTeacher.FirstName == teacherToUpdate.FirstName &&
+		updatedTeacher.LastName == teacherToUpdate.LastName &&
+		updatedTeacher.Email == teacherToUpdate.Email &&
+		updatedTeacher.Class == teacherToUpdate.Class &&
+		updatedTeacher.Subject == teacherToUpdate.Subject {
 
 		http.Error(w, "No changes detected in the teacher's details", http.StatusBadRequest)
 		return
@@ -289,7 +253,7 @@ func UpdateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		SET first_name = ?, last_name = ?, email = ?, class = ?, subject = ?
 		WHERE id = ?`
 
-	updatedTeacher.ID = existingTeacher.ID
+	updatedTeacher.ID = teacherToUpdate.ID
 	_, err = db.Exec(updateTeacherQuery, updatedTeacher.FirstName, updatedTeacher.LastName, updatedTeacher.Email, updatedTeacher.Class, updatedTeacher.Subject, updatedTeacher.ID)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to update teacher: %v", err), http.StatusInternalServerError)
@@ -309,11 +273,110 @@ func UpdateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// PatchTeachersHandler handles PATCH requests to partially update teacher records
+// PatchTeachersHandler handles PATCH requests to partially update teachers records
+// PATCH /teachers/
 func PatchTeachersHandler(w http.ResponseWriter, r *http.Request) {
+	db, err := sqlconnect.ConnectDb()
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	var updatedFields []map[string]interface{}
+	err = json.NewDecoder(r.Body).Decode(&updatedFields)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to decode request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	// Validate all fields before starting the transaction
+	for _, teacherUpdate := range updatedFields {
+		idFloat, ok := teacherUpdate["id"].(float64)
+		if !ok {
+			http.Error(w, "Each update must include a valid 'id' field", http.StatusBadRequest)
+			return
+		}
+		id := int(idFloat)
+
+		teacherToUpdate, err := getTeacherByID(db, id)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, fmt.Sprintf("Teacher not found (id: %d)", id), http.StatusNotFound)
+				return
+			}
+			http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		validFields := buildValidFieldsMap(teacherToUpdate)
+		if err := validateUpdateFields(validFields, teacherUpdate); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to begin transaction: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	var teachersFromDB []models.Teacher
+
+	for _, teacherUpdate := range updatedFields {
+		id := int(teacherUpdate["id"].(float64))
+		teacherToUpdate, err := getTeacherByID(tx, id)
+		if err != nil {
+			tx.Rollback()
+			http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		validFields := buildValidFieldsMap(teacherToUpdate)
+		applyUpdateToStruct(&teacherToUpdate, validFields, teacherUpdate)
+
+		var updateFields []string
+		var updateArgs []interface{}
+		for key, value := range teacherUpdate {
+			if key == "id" {
+				continue
+			}
+			updateFields = append(updateFields, fmt.Sprintf("%s = ?", key))
+			updateArgs = append(updateArgs, value)
+		}
+		if len(updateFields) == 0 {
+			tx.Rollback()
+			http.Error(w, "No valid fields provided for update", http.StatusBadRequest)
+			return
+		}
+		updateArgs = append(updateArgs, teacherToUpdate.ID)
+		updateTeacherQuery := fmt.Sprintf("UPDATE teachers SET %s WHERE id = ?", strings.Join(updateFields, ", "))
+
+		_, err = tx.Exec(updateTeacherQuery, updateArgs...)
+		if err != nil {
+			tx.Rollback()
+			http.Error(w, fmt.Sprintf("Failed to update teacher: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		teachersFromDB = append(teachersFromDB, teacherToUpdate)
+	}
+
+	if err := tx.Commit(); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to commit transaction: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(teachersFromDB)
+}
+
+// PatchOneTeacherHandler handles PATCH requests to partially update a teacher records
+// PATCH /teachers/{id}
+func PatchOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the teacher id from the path
-	path := strings.TrimPrefix(r.URL.Path, "/teachers/")
-	idStr := strings.TrimSuffix(path, "/")
+	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Invalid Teacher ID: %s", idStr), http.StatusBadRequest)
@@ -336,11 +399,8 @@ func PatchTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	// Get existing teacher by id
-	var existingTeacher models.Teacher
-	query := "SELECT * FROM teachers WHERE id = ?"
-	err = db.QueryRow(query, id).
-		Scan(&existingTeacher.ID, &existingTeacher.FirstName, &existingTeacher.LastName, &existingTeacher.Email, &existingTeacher.Class, &existingTeacher.Subject)
+	// Get existing teacher by id using helper
+	teacherToUpdate, err := getTeacherByID(db, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "Teacher not found", http.StatusNotFound)
@@ -350,47 +410,34 @@ func PatchTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate fields to update
-	teacherType := reflect.TypeOf(existingTeacher)
-	validFields := make(map[string]int)
-	for i := 0; i < teacherType.NumField(); i++ {
-		jsonTag := strings.Split(teacherType.Field(i).Tag.Get("json"), ",")[0]
-		if jsonTag != "" {
-			validFields[jsonTag] = i
-		}
+	// Build valid fields map using helper
+	validFields := buildValidFieldsMap(teacherToUpdate)
+
+	// Validate fields to update using helper
+	if err := validateUpdateFields(validFields, updatedFields); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
+
+	// Apply updates to struct using helper
+	applyUpdateToStruct(&teacherToUpdate, validFields, updatedFields)
 
 	// Build update query and args
 	var updateFields []string
 	var updateArgs []interface{}
-
 	for key, value := range updatedFields {
-		fieldIdx, ok := validFields[key]
-		if !ok {
-			http.Error(w, fmt.Sprintf("Invalid field: %s", key), http.StatusBadRequest)
-			return
+		if key == "id" {
+			continue
 		}
 		updateFields = append(updateFields, fmt.Sprintf("%s = ?", key))
 		updateArgs = append(updateArgs, value)
-
-		// Update the struct field using reflection
-		fieldVal := reflect.ValueOf(&existingTeacher).Elem().Field(fieldIdx)
-		val := reflect.ValueOf(value)
-
-		if val.Type().ConvertibleTo(fieldVal.Type()) {
-			fieldVal.Set(val.Convert(fieldVal.Type()))
-		} else {
-			http.Error(w, fmt.Sprintf("Type mismatch for field: %s", key), http.StatusBadRequest)
-			return
-		}
 	}
-
 	if len(updateFields) == 0 {
 		http.Error(w, "No valid fields provided for update", http.StatusBadRequest)
 		return
 	}
 
-	updateArgs = append(updateArgs, existingTeacher.ID)
+	updateArgs = append(updateArgs, teacherToUpdate.ID)
 	updateTeacherQuery := fmt.Sprintf("UPDATE teachers SET %s WHERE id = ?", strings.Join(updateFields, ", "))
 
 	_, err = db.Exec(updateTeacherQuery, updateArgs...)
@@ -401,14 +448,13 @@ func PatchTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Return the updated teacher
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(existingTeacher)
+	json.NewEncoder(w).Encode(teacherToUpdate)
 }
 
 // DeleteTeachersHandler handles DELETE requests to remove a teacher record
 func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the teachers Id from the path
-	path := strings.TrimPrefix(r.URL.Path, "/teachers/")
-	idStr := strings.TrimSuffix(path, "/")
+	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
 
 	if err != nil {
@@ -454,4 +500,103 @@ func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(response)
+}
+
+// Helper functions
+// getTeacherByID retrieves a teacher by ID from the database
+func getTeacherByID(db queryer, id int) (models.Teacher, error) {
+	var teacher models.Teacher
+	query := "SELECT * FROM teachers WHERE id = ?"
+	err := db.QueryRow(query, id).
+		Scan(&teacher.ID, &teacher.FirstName, &teacher.LastName, &teacher.Email, &teacher.Class, &teacher.Subject)
+	return teacher, err
+}
+
+// buildValidFieldsMap builds a map of valid JSON field names to struct field indices
+func buildValidFieldsMap(teacher models.Teacher) map[string]int {
+	teacherType := reflect.TypeOf(teacher)
+	validFields := make(map[string]int)
+	for i := 0; i < teacherType.NumField(); i++ {
+		jsonTag := strings.Split(teacherType.Field(i).Tag.Get("json"), ",")[0]
+		if jsonTag != "" {
+			validFields[jsonTag] = i
+		}
+	}
+	return validFields
+}
+
+// validateUpdateFields checks if the fields in the update map are valid and of correct type
+func validateUpdateFields(validFields map[string]int, update map[string]interface{}) error {
+	for key, value := range update {
+		if key == "id" {
+			continue
+		}
+		fieldIdx, ok := validFields[key]
+		if !ok {
+			return fmt.Errorf("invalid field: %s", key)
+		}
+		fieldType := reflect.TypeOf(models.Teacher{}).Field(fieldIdx).Type
+		val := reflect.ValueOf(value)
+		if !val.Type().ConvertibleTo(fieldType) {
+			return fmt.Errorf("type mismatch for field: %s", key)
+		}
+	}
+	return nil
+}
+
+func applyUpdateToStruct(teacher *models.Teacher, validFields map[string]int, update map[string]interface{}) {
+	for key, value := range update {
+		if key == "id" {
+			continue
+		}
+		fieldIdx := validFields[key]
+		fieldVal := reflect.ValueOf(teacher).Elem().Field(fieldIdx)
+		val := reflect.ValueOf(value)
+		fieldVal.Set(val.Convert(fieldVal.Type()))
+	}
+}
+
+// addFilters adds filtering conditions to the SQL query based on URL query parameters.
+func addFilters(r *http.Request, query string, args []interface{}) (string, []interface{}) {
+	// Handle Query parameters for filtering
+	params := map[string]string{
+		"first_name": "first_name",
+		"last_name":  "last_name",
+		"email":      "email",
+		"class":      "class",
+		"subject":    "subject",
+	}
+
+	for param, dbField := range params {
+		value := r.URL.Query().Get(param)
+		if value != "" {
+			query += fmt.Sprintf(" AND %s = ?", dbField)
+			args = append(args, value)
+		}
+	}
+	return query, args
+}
+
+// Extracted function for building ORDER BY clause from sortby query parameters
+func buildOrderByClause(r *http.Request) string {
+	sortParams := r.URL.Query()["sortby"]
+	if len(sortParams) == 0 {
+		return ""
+	}
+	orderBy := " ORDER BY "
+	for i, param := range sortParams {
+		parts := strings.Split(param, ":")
+		if len(parts) == 2 {
+			field := parts[0]
+			order := strings.ToUpper(parts[1])
+			if order != "ASC" && order != "DESC" {
+				order = "ASC"
+			}
+			if i > 0 {
+				orderBy += ", "
+			}
+			orderBy += fmt.Sprintf("%s %s", field, order)
+		}
+	}
+	return orderBy
 }
