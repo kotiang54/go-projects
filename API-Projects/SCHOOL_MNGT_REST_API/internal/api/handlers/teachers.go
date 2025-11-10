@@ -17,13 +17,13 @@ type queryer interface {
 	QueryRow(query string, args ...interface{}) *sql.Row
 }
 
-type dbHandler struct {
-	db *sql.DB
-}
+// type dbHandler struct {
+// 	db *sql.DB
+// }
 
-func (h *dbHandler) QueryRow(query string, args ...interface{}) *sql.Row {
-	return h.db.QueryRow(query, args...)
-}
+// func (h *dbHandler) QueryRow(query string, args ...interface{}) *sql.Row {
+// 	return h.db.QueryRow(query, args...)
+// }
 
 // GetTeachersHandler handles GET requests to fetch teachers
 func GetTeachersHandler(w http.ResponseWriter, r *http.Request) {
@@ -451,8 +451,8 @@ func PatchOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(teacherToUpdate)
 }
 
-// DeleteTeachersHandler handles DELETE requests to remove a teacher record
-func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
+// DeleteOneTeacherHandler handles DELETE requests to remove a teacher record
+func DeleteOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the teachers Id from the path
 	idStr := r.PathValue("id")
 	id, err := strconv.Atoi(idStr)
@@ -497,6 +497,89 @@ func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	}{
 		Status:  "success",
 		Message: fmt.Sprintf("Teacher with ID %d deleted successfully", id),
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+// DeleteTeachersHandler handles DELETE requests to remove teachers record
+func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
+
+	db, err := sqlconnect.ConnectDb()
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	var IDs []int
+	err = json.NewDecoder(r.Body).Decode(&IDs)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to decode request body: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to begin transaction: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	stmt, err := tx.Prepare("DELETE FROM teachers WHERE id = ?")
+	if err != nil {
+		tx.Rollback()
+		http.Error(w, fmt.Sprintf("Failed to prepare statement: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+
+	// type myInt int
+	deletedIDs := []int{}
+
+	for _, id := range IDs {
+		// Delete the teacher
+		result, err := stmt.Exec(id)
+		if err != nil {
+			tx.Rollback()
+			http.Error(w, fmt.Sprintf("Failed to delete teacher with ID %d: %v", id, err), http.StatusInternalServerError)
+			return
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			tx.Rollback()
+			http.Error(w, fmt.Sprintf("Failed to retrieve affected rows: %v", err), http.StatusInternalServerError)
+			return
+		}
+
+		if rowsAffected == 0 {
+			tx.Rollback()
+			http.Error(w, "Teacher not found", http.StatusNotFound)
+			return
+		}
+
+		deletedIDs = append(deletedIDs, id)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to commit transaction: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	if len(deletedIDs) == 0 {
+		http.Error(w, "No teachers found", http.StatusNotFound)
+		return
+	}
+
+	// Return success response
+	w.Header().Set("Content-Type", "application/json")
+	response := struct {
+		Status     string `json:"status"`
+		DeletedIDs []int  `json:"deleted_ids"`
+	}{
+		Status:     "Teachers successfully deleted",
+		DeletedIDs: deletedIDs,
 	}
 
 	json.NewEncoder(w).Encode(response)
