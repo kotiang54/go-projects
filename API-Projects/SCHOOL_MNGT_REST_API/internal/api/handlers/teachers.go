@@ -554,7 +554,7 @@ func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
 		if rowsAffected == 0 {
 			tx.Rollback()
-			http.Error(w, "Teacher not found", http.StatusNotFound)
+			http.Error(w, fmt.Sprintf("Teacher with ID %d not found", id), http.StatusNotFound)
 			return
 		}
 
