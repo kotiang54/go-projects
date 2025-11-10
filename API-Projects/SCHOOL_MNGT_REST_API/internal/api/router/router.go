@@ -13,14 +13,16 @@ func Router() *http.ServeMux {
 	mux.HandleFunc("/", handlers.RootHandler)
 
 	// Teachers route
-	mux.HandleFunc("GET /teachers/", handlers.TeachersHandler)
-	mux.HandleFunc("GET /teachers/{id}", handlers.TeachersHandler)
-	mux.HandleFunc("POST /teachers/", handlers.TeachersHandler)
-	mux.HandleFunc("PUT /teachers/", handlers.TeachersHandler)
-	mux.HandleFunc("PATCH /teachers/", handlers.TeachersHandler)
-	mux.HandleFunc("PATCH /teachers/{id}", handlers.TeachersHandler)
-	mux.HandleFunc("DELETE /teachers/", handlers.TeachersHandler)
-	mux.HandleFunc("DELETE /teachers/{id}", handlers.TeachersHandler)
+	mux.HandleFunc("GET /teachers/", handlers.GetTeachersHandler)
+	mux.HandleFunc("POST /teachers/", handlers.CreateTeachersHandler)
+	mux.HandleFunc("PATCH /teachers/", handlers.PatchTeachersHandler)
+	mux.HandleFunc("DELETE /teachers/", handlers.DeleteTeachersHandler)
+
+	// Teachers route with ID
+	mux.HandleFunc("GET /teachers/{id}", handlers.GetTeacherHandler)
+	mux.HandleFunc("PUT /teachers/{id}", handlers.UpdateTeachersHandler)
+	mux.HandleFunc("PATCH /teachers/{id}", handlers.PatchTeachersHandler)
+	mux.HandleFunc("DELETE /teachers/{id}", handlers.DeleteTeachersHandler)
 
 	// Students route
 	mux.HandleFunc("/students/", handlers.StudentsHandler)

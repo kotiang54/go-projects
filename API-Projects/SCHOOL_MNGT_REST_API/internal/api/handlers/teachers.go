@@ -12,37 +12,65 @@ import (
 	"strings"
 )
 
-func TeachersHandler(w http.ResponseWriter, r *http.Request) {
-	// Path parameters e.g. /teachers/{id}
-	// Query parameters e.g. /teachers/?key=value&query=value2&sortBy=email&sortOrder=ASC
+// GetTeachersHandler handles GET requests to fetch teachers
+func GetTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
-	switch r.Method {
-	case http.MethodGet:
-		// Handle GET request to fetch all teachers
-		getTeachersHandler(w, r)
-
-	case http.MethodPost:
-		// Handle POST request to create a new teacher
-		createTeachersHandler(w, r)
-
-	case http.MethodPut:
-		// Handle PUT request to update an existing teacher
-		updateTeachersHandler(w, r)
-
-	case http.MethodPatch:
-		// Handle PATCH request to partially update teacher records
-		patchTeachersHandler(w, r)
-
-	case http.MethodDelete:
-		// Handle DELETE request to delete a teacher
-		deleteTeachersHandler(w, r)
-
-	default:
-		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+	db, err := sqlconnect.ConnectDb()
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
 	}
+	defer func() {
+		if db != nil {
+			db.Close()
+		}
+	}()
+
+	// Build the SQL query with filters
+	query := "SELECT * FROM teachers WHERE 1=1" // * id, first_name, last_name, email, class, subject
+	var args []interface{}
+
+	// Add filters based on query parameters
+	query, args = addFilters(r, query, args)
+
+	// Example: /teachers/?sortby=last_name:asc&sortby=class:desc
+	query += buildOrderByClause(r)
+
+	// Execute the query
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Database Query Error: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	defer rows.Close()
+
+	teacherList := make([]models.Teacher, 0)
+	for rows.Next() {
+		var teacher models.Teacher
+		if err := rows.Scan(&teacher.ID, &teacher.FirstName, &teacher.LastName, &teacher.Email, &teacher.Class, &teacher.Subject); err != nil {
+			http.Error(w, fmt.Sprintf("Database scan error: %v", err), http.StatusInternalServerError)
+			return
+		}
+		teacherList = append(teacherList, teacher)
+	}
+
+	response := struct {
+		Status string           `json:"status"`
+		Count  int              `json:"count"`
+		Data   []models.Teacher `json:"data"`
+	}{
+		Status: "success",
+		Count:  len(teacherList),
+		Data:   teacherList,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
-func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
+// GetTeacherHandler handles GET requests to fetch a specific teacher
+func GetTeacherHandler(w http.ResponseWriter, r *http.Request) {
 
 	db, err := sqlconnect.ConnectDb()
 	if err != nil {
@@ -58,53 +86,7 @@ func getTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	// Path parameters can be handled here if needed
 	// e.g. teacherID := chi.URLParam(r, "id")
 
-	path := strings.TrimPrefix(r.URL.Path, "/teachers/")
-	teacherIDStr := strings.TrimSuffix(path, "/")
-
-	if teacherIDStr == "" {
-
-		// Build the SQL query with filters
-		query := "SELECT * FROM teachers WHERE 1=1" // * id, first_name, last_name, email, class, subject
-		var args []interface{}
-
-		// Add filters based on query parameters
-		query, args = addFilters(r, query, args)
-
-		// Example: /teachers/?sortby=last_name:asc&sortby=class:desc
-		query += buildOrderByClause(r)
-
-		// Execute the query
-		rows, err := db.Query(query, args...)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Database Query Error: %v", err), http.StatusInternalServerError)
-			return
-		}
-
-		defer rows.Close()
-
-		teacherList := make([]models.Teacher, 0)
-		for rows.Next() {
-			var teacher models.Teacher
-			if err := rows.Scan(&teacher.ID, &teacher.FirstName, &teacher.LastName, &teacher.Email, &teacher.Class, &teacher.Subject); err != nil {
-				http.Error(w, fmt.Sprintf("Database scan error: %v", err), http.StatusInternalServerError)
-				return
-			}
-			teacherList = append(teacherList, teacher)
-		}
-
-		response := struct {
-			Status string           `json:"status"`
-			Count  int              `json:"count"`
-			Data   []models.Teacher `json:"data"`
-		}{
-			Status: "success",
-			Count:  len(teacherList),
-			Data:   teacherList,
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
-	}
+	teacherIDStr := r.PathValue("id")
 
 	// Handle Path parameters for specific teacher
 	id, err := strconv.Atoi(teacherIDStr)
@@ -175,8 +157,8 @@ func buildOrderByClause(r *http.Request) string {
 	return orderBy
 }
 
-// createTeachersHandler handles the creation of new teachers
-func createTeachersHandler(w http.ResponseWriter, r *http.Request) {
+// CreateTeachersHandler handles the creation of new teachers
+func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
 	db, err := sqlconnect.ConnectDb()
 	if err != nil {
@@ -239,8 +221,8 @@ func createTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// updateTeachersHandler handles updating an existing teacher
-func updateTeachersHandler(w http.ResponseWriter, r *http.Request) {
+// UpdateTeachersHandler handles updating an existing teacher
+func UpdateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	// get teachers id from path
 	path := strings.TrimPrefix(r.URL.Path, "/teachers/")
 	idStr := strings.TrimSuffix(path, "/")
@@ -327,8 +309,8 @@ func updateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// patchTeachersHandler handles PATCH requests to partially update teacher records
-func patchTeachersHandler(w http.ResponseWriter, r *http.Request) {
+// PatchTeachersHandler handles PATCH requests to partially update teacher records
+func PatchTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the teacher id from the path
 	path := strings.TrimPrefix(r.URL.Path, "/teachers/")
 	idStr := strings.TrimSuffix(path, "/")
@@ -422,8 +404,8 @@ func patchTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(existingTeacher)
 }
 
-// deleteTeachersHandler handles DELETE requests to remove a teacher record
-func deleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
+// DeleteTeachersHandler handles DELETE requests to remove a teacher record
+func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the teachers Id from the path
 	path := strings.TrimPrefix(r.URL.Path, "/teachers/")
 	idStr := strings.TrimSuffix(path, "/")
