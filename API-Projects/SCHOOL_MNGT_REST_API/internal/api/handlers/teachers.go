@@ -28,7 +28,8 @@ type queryer interface {
 // GetTeachersHandler handles GET requests to fetch teachers
 func GetTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
-	teacherList, err := sqlconnect.GetTeachersCollection(r)
+	var teachers []models.Teacher
+	teachers, err := sqlconnect.GetTeachersCollection(teachers, r)
 	if err != nil {
 		return
 	}
@@ -39,8 +40,8 @@ func GetTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		Data   []models.Teacher `json:"data"`
 	}{
 		Status: "success",
-		Count:  len(teacherList),
-		Data:   teacherList,
+		Count:  len(teachers),
+		Data:   teachers,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

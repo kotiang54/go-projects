@@ -55,7 +55,7 @@ func buildOrderByClause(r *http.Request) string {
 
 // GetTeachersCollection retrieves a collection of teachers from the database
 // with optional filtering and sorting.
-func GetTeachersCollection(r *http.Request) ([]models.Teacher, error) {
+func GetTeachersCollection(teachers []models.Teacher, r *http.Request) ([]models.Teacher, error) {
 	db, err := ConnectDb()
 	if err != nil {
 		// http.Error(w, "Database connection error", http.StatusInternalServerError)
@@ -86,16 +86,16 @@ func GetTeachersCollection(r *http.Request) ([]models.Teacher, error) {
 
 	defer rows.Close()
 
-	teacherList := make([]models.Teacher, 0)
+	// teachers := make([]models.Teacher, 0)
 	for rows.Next() {
 		var teacher models.Teacher
 		if err := rows.Scan(&teacher.ID, &teacher.FirstName, &teacher.LastName, &teacher.Email, &teacher.Class, &teacher.Subject); err != nil {
 			// http.Error(w, fmt.Sprintf("Database scan error: %v", err), http.StatusInternalServerError)
 			return nil, err
 		}
-		teacherList = append(teacherList, teacher)
+		teachers = append(teachers, teacher)
 	}
-	return teacherList, nil
+	return teachers, nil
 }
 
 // GetTeacherByID retrieves a single teacher by their ID.
