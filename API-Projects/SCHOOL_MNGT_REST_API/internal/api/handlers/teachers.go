@@ -124,52 +124,8 @@ func UpdateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// update teacher in database
-	db, err := sqlconnect.ConnectDb()
+	result, err := sqlconnect.UpdateTeacherByID(id, updatedTeacher)
 	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-	defer func() {
-		if db != nil {
-			db.Close()
-		}
-	}()
-
-	// get the existing teacher from database
-	query := "SELECT * FROM teachers WHERE id = ?"
-	var teacherToUpdate models.Teacher
-	err = db.QueryRow(query, id).
-		Scan(&teacherToUpdate.ID, &teacherToUpdate.FirstName, &teacherToUpdate.LastName, &teacherToUpdate.Email, &teacherToUpdate.Class, &teacherToUpdate.Subject)
-
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "Teacher not found", http.StatusNotFound)
-			return
-		}
-		http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	// Check if there are any changes before updating
-	if updatedTeacher.FirstName == teacherToUpdate.FirstName &&
-		updatedTeacher.LastName == teacherToUpdate.LastName &&
-		updatedTeacher.Email == teacherToUpdate.Email &&
-		updatedTeacher.Class == teacherToUpdate.Class &&
-		updatedTeacher.Subject == teacherToUpdate.Subject {
-
-		http.Error(w, "No changes detected in the teacher's details", http.StatusBadRequest)
-		return
-	}
-
-	const updateTeacherQuery = `
-		UPDATE teachers
-		SET first_name = ?, last_name = ?, email = ?, class = ?, subject = ?
-		WHERE id = ?`
-
-	updatedTeacher.ID = teacherToUpdate.ID
-	_, err = db.Exec(updateTeacherQuery, updatedTeacher.FirstName, updatedTeacher.LastName, updatedTeacher.Email, updatedTeacher.Class, updatedTeacher.Subject, updatedTeacher.ID)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to update teacher: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -180,7 +136,7 @@ func UpdateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		Data   models.Teacher `json:"data"`
 	}{
 		Status: "success",
-		Data:   updatedTeacher,
+		Data:   result,
 	}
 
 	json.NewEncoder(w).Encode(response)

@@ -169,3 +169,56 @@ func CreateTeachers(newTeachers []models.Teacher) ([]models.Teacher, error) {
 
 	return addedTeachers, nil
 }
+
+// UpdateTeacherByID updates an existing teacher's details by their ID.
+func UpdateTeacherByID(id int, updatedTeacher models.Teacher) (models.Teacher, error) {
+	db, err := ConnectDb()
+	if err != nil {
+		// http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return models.Teacher{}, err
+	}
+	defer func() {
+		if db != nil {
+			db.Close()
+		}
+	}()
+
+	// get the existing teacher from database
+	query := "SELECT * FROM teachers WHERE id = ?"
+	var teacherToUpdate models.Teacher
+	err = db.QueryRow(query, id).
+		Scan(&teacherToUpdate.ID, &teacherToUpdate.FirstName, &teacherToUpdate.LastName, &teacherToUpdate.Email, &teacherToUpdate.Class, &teacherToUpdate.Subject)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// http.Error(w, "Teacher not found", http.StatusNotFound)
+			return models.Teacher{}, err
+		}
+		// http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
+		return models.Teacher{}, err
+	}
+
+	// Check if there are any changes before updating
+	if updatedTeacher.FirstName == teacherToUpdate.FirstName &&
+		updatedTeacher.LastName == teacherToUpdate.LastName &&
+		updatedTeacher.Email == teacherToUpdate.Email &&
+		updatedTeacher.Class == teacherToUpdate.Class &&
+		updatedTeacher.Subject == teacherToUpdate.Subject {
+
+		// http.Error(w, "No changes detected in the teacher's details", http.StatusBadRequest)
+		return models.Teacher{}, err
+	}
+
+	const updateTeacherQuery = `
+		UPDATE teachers
+		SET first_name = ?, last_name = ?, email = ?, class = ?, subject = ?
+		WHERE id = ?`
+
+	updatedTeacher.ID = teacherToUpdate.ID
+	_, err = db.Exec(updateTeacherQuery, updatedTeacher.FirstName, updatedTeacher.LastName, updatedTeacher.Email, updatedTeacher.Class, updatedTeacher.Subject, updatedTeacher.ID)
+	if err != nil {
+		// http.Error(w, fmt.Sprintf("Failed to update teacher: %v", err), http.StatusInternalServerError)
+		return models.Teacher{}, err
+	}
+	return updatedTeacher, nil
+}
