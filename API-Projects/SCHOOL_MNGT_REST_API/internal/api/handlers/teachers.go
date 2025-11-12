@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"school_management_api/internal/models"
 	"school_management_api/internal/repository/sqlconnect"
@@ -13,8 +14,10 @@ import (
 func GetTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
 	var teachers []models.Teacher
-	teachers, err := sqlconnect.GetTeachersCollection(teachers, r)
+	teachers, err := sqlconnect.GetTeachersInDb(teachers, r)
 	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -38,11 +41,14 @@ func GetOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 	teacherIDStr := r.PathValue("id")
 	id, err := strconv.Atoi(teacherIDStr)
 	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid Teacher ID: %s", teacherIDStr), http.StatusBadRequest)
 		return
 	}
 
 	teacher, err := sqlconnect.GetTeacherByID(id)
 	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -56,13 +62,15 @@ func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	var newTeachers []models.Teacher
 	err := json.NewDecoder(r.Body).Decode(&newTeachers)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
 		return
 	}
 
 	addedTeachers, err := sqlconnect.CreateTeachers(newTeachers)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to create teachers: %v", err), http.StatusInternalServerError)
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -110,6 +118,8 @@ func UpdateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	// update teacher in database
 	result, err := sqlconnect.UpdateTeacherByID(id, updatedTeacher)
 	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -139,6 +149,8 @@ func PatchTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
 	teachersFromDB, err := sqlconnect.PatchTeachersInDb(updatedFields)
 	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -167,7 +179,8 @@ func PatchOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 
 	teacherToUpdate, err := sqlconnect.PatchTeacherByID(id, updatedFields)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to update teacher: %v", err), http.StatusInternalServerError)
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -188,32 +201,16 @@ func DeleteOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Connect to database
-	db, err := sqlconnect.ConnectDb()
+	err = sqlconnect.DeleteTeacherByID(id)
 	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
-	// Delete the teacher
-	result, err := db.Exec("DELETE FROM teachers WHERE id = ?", id)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to delete teacher: %v", err), http.StatusInternalServerError)
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to retrieve affected rows: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	if rowsAffected == 0 {
-		http.Error(w, "Teacher not found", http.StatusNotFound)
-		return
-	}
-
+	// ----- Alternate approach -----
 	// w.WriteHeader(http.StatusNoContent)
+
 	// Return success response
 	w.Header().Set("Content-Type", "application/json")
 	response := struct {
@@ -230,70 +227,17 @@ func DeleteOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 // DeleteTeachersHandler handles DELETE requests to remove teachers record
 func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
-	db, err := sqlconnect.ConnectDb()
-	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
 	var IDs []int
-	err = json.NewDecoder(r.Body).Decode(&IDs)
+	err := json.NewDecoder(r.Body).Decode(&IDs)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to decode request body: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	tx, err := db.Begin()
+	deletedIDs, err := sqlconnect.DeleteTeachersInDB(IDs)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to begin transaction: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	stmt, err := tx.Prepare("DELETE FROM teachers WHERE id = ?")
-	if err != nil {
-		tx.Rollback()
-		http.Error(w, fmt.Sprintf("Failed to prepare statement: %v", err), http.StatusInternalServerError)
-		return
-	}
-	defer stmt.Close()
-
-	// type myInt int
-	deletedIDs := []int{}
-
-	for _, id := range IDs {
-		// Delete the teacher
-		result, err := stmt.Exec(id)
-		if err != nil {
-			tx.Rollback()
-			http.Error(w, fmt.Sprintf("Failed to delete teacher with ID %d: %v", id, err), http.StatusInternalServerError)
-			return
-		}
-
-		rowsAffected, err := result.RowsAffected()
-		if err != nil {
-			tx.Rollback()
-			http.Error(w, fmt.Sprintf("Failed to retrieve affected rows: %v", err), http.StatusInternalServerError)
-			return
-		}
-
-		if rowsAffected == 0 {
-			tx.Rollback()
-			http.Error(w, fmt.Sprintf("Teacher with ID %d not found", id), http.StatusNotFound)
-			return
-		}
-
-		deletedIDs = append(deletedIDs, id)
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to commit transaction: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	if len(deletedIDs) == 0 {
-		http.Error(w, "No teachers found", http.StatusNotFound)
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
