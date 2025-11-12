@@ -377,6 +377,7 @@ func PatchTeachersInDb(updatedFields []map[string]interface{}) ([]models.Teacher
 		// http.Error(w, fmt.Sprintf("Failed to commit transaction: %v", err), http.StatusInternalServerError)
 		return teachersFromDB, err
 	}
+
 	return teachersFromDB, nil
 }
 
@@ -425,7 +426,7 @@ func PatchTeacherByID(id int, updatedFields map[string]interface{}) (models.Teac
 	}
 	if len(updateFields) == 0 {
 		// http.Error(w, "No valid fields provided for update", http.StatusBadRequest)
-		return models.Teacher{}, err
+		return models.Teacher{}, fmt.Errorf("no valid fields provided for update")
 	}
 
 	updateArgs = append(updateArgs, teacherToUpdate.ID)
@@ -438,4 +439,97 @@ func PatchTeacherByID(id int, updatedFields map[string]interface{}) (models.Teac
 	}
 
 	return teacherToUpdate, nil
+}
+
+func DeleteTeacherByID(id int) error {
+	db, err := ConnectDb()
+	if err != nil {
+		// http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return err
+	}
+	defer db.Close()
+
+	// Delete the teacher
+	result, err := db.Exec("DELETE FROM teachers WHERE id = ?", id)
+	if err != nil {
+		// http.Error(w, fmt.Sprintf("Failed to delete teacher: %v", err), http.StatusInternalServerError)
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		// http.Error(w, fmt.Sprintf("Failed to retrieve affected rows: %v", err), http.StatusInternalServerError)
+		return err
+	}
+
+	if rowsAffected == 0 {
+		// http.Error(w, "Teacher not found", http.StatusNotFound)
+		return fmt.Errorf("teacher with ID %d not found", id)
+	}
+	return nil
+}
+
+// DeleteTeachersInDB deletes multiple teachers by their IDs and
+// returns the list of deleted IDs.
+func DeleteTeachersInDB(IDs []int) ([]int, error) {
+	db, err := ConnectDb()
+	if err != nil {
+		// http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return nil, err
+	}
+	defer db.Close()
+
+	tx, err := db.Begin()
+	if err != nil {
+		// http.Error(w, fmt.Sprintf("Failed to begin transaction: %v", err), http.StatusInternalServerError)
+		return nil, err
+	}
+
+	stmt, err := tx.Prepare("DELETE FROM teachers WHERE id = ?")
+	if err != nil {
+		tx.Rollback()
+		// http.Error(w, fmt.Sprintf("Failed to prepare statement: %v", err), http.StatusInternalServerError)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	// type myInt int
+	deletedIDs := []int{}
+
+	for _, id := range IDs {
+		// Delete the teacher
+		result, err := stmt.Exec(id)
+		if err != nil {
+			tx.Rollback()
+			// http.Error(w, fmt.Sprintf("Failed to delete teacher with ID %d: %v", id, err), http.StatusInternalServerError)
+			return nil, err
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			tx.Rollback()
+			// http.Error(w, fmt.Sprintf("Failed to retrieve affected rows: %v", err), http.StatusInternalServerError)
+			return nil, err
+		}
+
+		if rowsAffected == 0 {
+			tx.Rollback()
+			// http.Error(w, fmt.Sprintf("Teacher with ID %d not found", id), http.StatusNotFound)
+			return nil, fmt.Errorf("teacher with ID %d not found", id)
+		}
+
+		deletedIDs = append(deletedIDs, id)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		// http.Error(w, fmt.Sprintf("Failed to commit transaction: %v", err), http.StatusInternalServerError)
+		return nil, err
+	}
+
+	if len(deletedIDs) == 0 {
+		// http.Error(w, "No teachers found", http.StatusNotFound)
+		return nil, fmt.Errorf("no teachers found")
+	}
+	return deletedIDs, nil
 }
