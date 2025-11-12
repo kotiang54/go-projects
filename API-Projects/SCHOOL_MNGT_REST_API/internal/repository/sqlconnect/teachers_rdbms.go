@@ -124,7 +124,7 @@ func applyUpdateToStruct(teacher *models.Teacher, validFields map[string]int, up
 
 // GetTeachersCollection retrieves a collection of teachers from the database
 // with optional filtering and sorting.
-func GetTeachersCollection(teachers []models.Teacher, r *http.Request) ([]models.Teacher, error) {
+func GetTeachersInDb(teachers []models.Teacher, r *http.Request) ([]models.Teacher, error) {
 	db, err := ConnectDb()
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "Error connecting to database")

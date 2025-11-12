@@ -9,7 +9,7 @@ func Router() *http.ServeMux {
 	// Multiplexer for http routes
 	mux := http.NewServeMux()
 
-	// Create a routes
+	// Create routes
 	mux.HandleFunc("/", handlers.RootHandler)
 
 	// Teachers route

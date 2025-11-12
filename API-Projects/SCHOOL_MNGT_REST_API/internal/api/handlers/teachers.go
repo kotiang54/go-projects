@@ -14,8 +14,10 @@ import (
 func GetTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
 	var teachers []models.Teacher
-	teachers, err := sqlconnect.GetTeachersCollection(teachers, r)
+	teachers, err := sqlconnect.GetTeachersInDb(teachers, r)
 	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -39,11 +41,14 @@ func GetOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 	teacherIDStr := r.PathValue("id")
 	id, err := strconv.Atoi(teacherIDStr)
 	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid Teacher ID: %s", teacherIDStr), http.StatusBadRequest)
 		return
 	}
 
 	teacher, err := sqlconnect.GetTeacherByID(id)
 	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -57,13 +62,15 @@ func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	var newTeachers []models.Teacher
 	err := json.NewDecoder(r.Body).Decode(&newTeachers)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
 		return
 	}
 
 	addedTeachers, err := sqlconnect.CreateTeachers(newTeachers)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to create teachers: %v", err), http.StatusInternalServerError)
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -111,6 +118,8 @@ func UpdateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	// update teacher in database
 	result, err := sqlconnect.UpdateTeacherByID(id, updatedTeacher)
 	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -140,6 +149,8 @@ func PatchTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
 	teachersFromDB, err := sqlconnect.PatchTeachersInDb(updatedFields)
 	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -168,7 +179,8 @@ func PatchOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 
 	teacherToUpdate, err := sqlconnect.PatchTeacherByID(id, updatedFields)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to update teacher: %v", err), http.StatusInternalServerError)
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -192,6 +204,7 @@ func DeleteOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 	err = sqlconnect.DeleteTeacherByID(id)
 	if err != nil {
 		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -224,6 +237,7 @@ func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	deletedIDs, err := sqlconnect.DeleteTeachersInDB(IDs)
 	if err != nil {
 		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
