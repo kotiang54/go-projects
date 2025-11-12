@@ -1,29 +1,13 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"reflect"
 	"school_management_api/internal/models"
 	"school_management_api/internal/repository/sqlconnect"
 	"strconv"
-	"strings"
 )
-
-// Add this interface for query compatibility
-type queryer interface {
-	QueryRow(query string, args ...interface{}) *sql.Row
-}
-
-// type dbHandler struct {
-// 	db *sql.DB
-// }
-
-// func (h *dbHandler) QueryRow(query string, args ...interface{}) *sql.Row {
-// 	return h.db.QueryRow(query, args...)
-// }
 
 // GetTeachersHandler handles GET requests to fetch teachers
 func GetTeachersHandler(w http.ResponseWriter, r *http.Request) {
@@ -145,95 +129,16 @@ func UpdateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 // PatchTeachersHandler handles PATCH requests to partially update teachers records
 // PATCH /teachers/
 func PatchTeachersHandler(w http.ResponseWriter, r *http.Request) {
-	db, err := sqlconnect.ConnectDb()
-	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
 
 	var updatedFields []map[string]interface{}
-	err = json.NewDecoder(r.Body).Decode(&updatedFields)
+	err := json.NewDecoder(r.Body).Decode(&updatedFields)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to decode request body: %v", err), http.StatusBadRequest)
 		return
 	}
 
-	// Validate all fields before starting the transaction
-	for _, teacherUpdate := range updatedFields {
-		idFloat, ok := teacherUpdate["id"].(float64)
-		if !ok {
-			http.Error(w, "Each update must include a valid 'id' field", http.StatusBadRequest)
-			return
-		}
-		id := int(idFloat)
-
-		teacherToUpdate, err := getTeacherByID(db, id)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				http.Error(w, fmt.Sprintf("Teacher not found (id: %d)", id), http.StatusNotFound)
-				return
-			}
-			http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
-			return
-		}
-
-		validFields := buildValidFieldsMap(teacherToUpdate)
-		if err := validateUpdateFields(validFields, teacherUpdate); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-	}
-
-	tx, err := db.Begin()
+	teachersFromDB, err := sqlconnect.PatchTeachersInDb(updatedFields)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to begin transaction: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	var teachersFromDB []models.Teacher
-
-	for _, teacherUpdate := range updatedFields {
-		id := int(teacherUpdate["id"].(float64))
-		teacherToUpdate, err := getTeacherByID(tx, id)
-		if err != nil {
-			tx.Rollback()
-			http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
-			return
-		}
-
-		validFields := buildValidFieldsMap(teacherToUpdate)
-		applyUpdateToStruct(&teacherToUpdate, validFields, teacherUpdate)
-
-		var updateFields []string
-		var updateArgs []interface{}
-		for key, value := range teacherUpdate {
-			if key == "id" {
-				continue
-			}
-			updateFields = append(updateFields, fmt.Sprintf("%s = ?", key))
-			updateArgs = append(updateArgs, value)
-		}
-		if len(updateFields) == 0 {
-			tx.Rollback()
-			http.Error(w, "No valid fields provided for update", http.StatusBadRequest)
-			return
-		}
-		updateArgs = append(updateArgs, teacherToUpdate.ID)
-		updateTeacherQuery := fmt.Sprintf("UPDATE teachers SET %s WHERE id = ?", strings.Join(updateFields, ", "))
-
-		_, err = tx.Exec(updateTeacherQuery, updateArgs...)
-		if err != nil {
-			tx.Rollback()
-			http.Error(w, fmt.Sprintf("Failed to update teacher: %v", err), http.StatusInternalServerError)
-			return
-		}
-
-		teachersFromDB = append(teachersFromDB, teacherToUpdate)
-	}
-
-	if err := tx.Commit(); err != nil {
-		http.Error(w, fmt.Sprintf("Failed to commit transaction: %v", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -260,56 +165,7 @@ func PatchOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Connect to database
-	db, err := sqlconnect.ConnectDb()
-	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
-	// Get existing teacher by id using helper
-	teacherToUpdate, err := getTeacherByID(db, id)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "Teacher not found", http.StatusNotFound)
-			return
-		}
-		http.Error(w, fmt.Sprintf("Database query error: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	// Build valid fields map using helper
-	validFields := buildValidFieldsMap(teacherToUpdate)
-
-	// Validate fields to update using helper
-	if err := validateUpdateFields(validFields, updatedFields); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	// Apply updates to struct using helper
-	applyUpdateToStruct(&teacherToUpdate, validFields, updatedFields)
-
-	// Build update query and args
-	var updateFields []string
-	var updateArgs []interface{}
-	for key, value := range updatedFields {
-		if key == "id" {
-			continue
-		}
-		updateFields = append(updateFields, fmt.Sprintf("%s = ?", key))
-		updateArgs = append(updateArgs, value)
-	}
-	if len(updateFields) == 0 {
-		http.Error(w, "No valid fields provided for update", http.StatusBadRequest)
-		return
-	}
-
-	updateArgs = append(updateArgs, teacherToUpdate.ID)
-	updateTeacherQuery := fmt.Sprintf("UPDATE teachers SET %s WHERE id = ?", strings.Join(updateFields, ", "))
-
-	_, err = db.Exec(updateTeacherQuery, updateArgs...)
+	teacherToUpdate, err := sqlconnect.PatchTeacherByID(id, updatedFields)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Failed to update teacher: %v", err), http.StatusInternalServerError)
 		return
@@ -452,58 +308,4 @@ func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(response)
-}
-
-// Helper functions
-// getTeacherByID retrieves a teacher by ID from the database
-func getTeacherByID(db queryer, id int) (models.Teacher, error) {
-	var teacher models.Teacher
-	query := "SELECT * FROM teachers WHERE id = ?"
-	err := db.QueryRow(query, id).
-		Scan(&teacher.ID, &teacher.FirstName, &teacher.LastName, &teacher.Email, &teacher.Class, &teacher.Subject)
-	return teacher, err
-}
-
-// buildValidFieldsMap builds a map of valid JSON field names to struct field indices
-func buildValidFieldsMap(teacher models.Teacher) map[string]int {
-	teacherType := reflect.TypeOf(teacher)
-	validFields := make(map[string]int)
-	for i := 0; i < teacherType.NumField(); i++ {
-		jsonTag := strings.Split(teacherType.Field(i).Tag.Get("json"), ",")[0]
-		if jsonTag != "" {
-			validFields[jsonTag] = i
-		}
-	}
-	return validFields
-}
-
-// validateUpdateFields checks if the fields in the update map are valid and of correct type
-func validateUpdateFields(validFields map[string]int, update map[string]interface{}) error {
-	for key, value := range update {
-		if key == "id" {
-			continue
-		}
-		fieldIdx, ok := validFields[key]
-		if !ok {
-			return fmt.Errorf("invalid field: %s", key)
-		}
-		fieldType := reflect.TypeOf(models.Teacher{}).Field(fieldIdx).Type
-		val := reflect.ValueOf(value)
-		if !val.Type().ConvertibleTo(fieldType) {
-			return fmt.Errorf("type mismatch for field: %s", key)
-		}
-	}
-	return nil
-}
-
-func applyUpdateToStruct(teacher *models.Teacher, validFields map[string]int, update map[string]interface{}) {
-	for key, value := range update {
-		if key == "id" {
-			continue
-		}
-		fieldIdx := validFields[key]
-		fieldVal := reflect.ValueOf(teacher).Elem().Field(fieldIdx)
-		val := reflect.ValueOf(value)
-		fieldVal.Set(val.Convert(fieldVal.Type()))
-	}
 }
