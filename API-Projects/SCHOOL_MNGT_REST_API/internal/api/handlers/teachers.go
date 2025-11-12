@@ -68,49 +68,18 @@ func GetOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 
 // CreateTeachersHandler handles the creation of new teachers
 func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
-
-	db, err := sqlconnect.ConnectDb()
-	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-	defer func() {
-		if db != nil {
-			db.Close()
-		}
-	}()
-
+	// Decode the request body into a slice of Teacher structs
 	var newTeachers []models.Teacher
-	err = json.NewDecoder(r.Body).Decode(&newTeachers)
+	err := json.NewDecoder(r.Body).Decode(&newTeachers)
 	if err != nil {
 		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
 		return
 	}
 
-	stmt, err := db.Prepare("INSERT INTO teachers (first_name, last_name, email, class, subject) VALUES (?, ?, ?, ?, ?)")
+	addedTeachers, err := sqlconnect.CreateTeachers(newTeachers)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to prepare SQL statement: %v", err), http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("Failed to create teachers: %v", err), http.StatusInternalServerError)
 		return
-	}
-	defer stmt.Close()
-
-	addedTeachers := make([]models.Teacher, len(newTeachers))
-	for i, newTeacher := range newTeachers {
-		res, err := stmt.Exec(newTeacher.FirstName, newTeacher.LastName, newTeacher.Email, newTeacher.Class, newTeacher.Subject)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to insert teacher: %v", err), http.StatusInternalServerError)
-			return
-		}
-
-		// Get the last inserted ID
-		lastId, err := res.LastInsertId()
-		if err != nil {
-			http.Error(w, "Failed to retrieve last insert ID", http.StatusInternalServerError)
-			return
-		}
-
-		newTeacher.ID = int(lastId)
-		addedTeachers[i] = newTeacher
 	}
 
 	w.Header().Set("Content-Type", "application/json")

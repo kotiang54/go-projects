@@ -127,3 +127,45 @@ func GetTeacherByID(id int) (models.Teacher, error) {
 	}
 	return teacher, nil
 }
+
+// CreateTeachers adds new teachers to the database.
+func CreateTeachers(newTeachers []models.Teacher) ([]models.Teacher, error) {
+	db, err := ConnectDb()
+	if err != nil {
+		// http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return nil, err
+	}
+	defer func() {
+		if db != nil {
+			db.Close()
+		}
+	}()
+
+	stmt, err := db.Prepare("INSERT INTO teachers (first_name, last_name, email, class, subject) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		// http.Error(w, fmt.Sprintf("Failed to prepare SQL statement: %v", err), http.StatusInternalServerError)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	addedTeachers := make([]models.Teacher, len(newTeachers))
+	for i, newTeacher := range newTeachers {
+		res, err := stmt.Exec(newTeacher.FirstName, newTeacher.LastName, newTeacher.Email, newTeacher.Class, newTeacher.Subject)
+		if err != nil {
+			// http.Error(w, fmt.Sprintf("Failed to insert teacher: %v", err), http.StatusInternalServerError)
+			return nil, err
+		}
+
+		// Get the last inserted ID
+		lastId, err := res.LastInsertId()
+		if err != nil {
+			// http.Error(w, "Failed to retrieve last insert ID", http.StatusInternalServerError)
+			return nil, err
+		}
+
+		newTeacher.ID = int(lastId)
+		addedTeachers[i] = newTeacher
+	}
+
+	return addedTeachers, nil
+}
