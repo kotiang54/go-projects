@@ -23,7 +23,8 @@ type queryer interface {
 // 	return h.db.QueryRow(query, args...)
 // }
 
-// Helper functions
+// =========== Helper functions ===================
+
 // addFilters adds filtering conditions to the SQL query based on URL query parameters.
 func addFilters(r *http.Request, query string, args []interface{}) (string, []interface{}) {
 	// Handle Query parameters for filtering
@@ -122,6 +123,63 @@ func applyUpdateToStruct(teacher *models.Teacher, validFields map[string]int, up
 	}
 }
 
+// generateInsertQuery generates an INSERT query for a given model
+func generateInsertQuery(model interface{}, tableName string) string {
+	modelType := reflect.TypeOf(model)
+	if modelType.Kind() == reflect.Ptr {
+		modelType = modelType.Elem()
+	}
+	if modelType.Kind() != reflect.Struct {
+		return "" // or panic / log an error
+	}
+
+	var columns, placeholders string
+
+	for i := 0; i < modelType.NumField(); i++ {
+		field := modelType.Field(i)
+		dbTag := strings.Split(field.Tag.Get("db"), ",")[0]
+		dbTag = strings.TrimSpace(dbTag)
+		if dbTag != "" && dbTag != "id" {
+			if len(columns) > 0 {
+				columns += ", "
+				placeholders += ", "
+			}
+			columns += dbTag
+			placeholders += "?"
+		}
+
+	}
+	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", tableName, columns, placeholders)
+	return query
+}
+
+// getStructValues returns a slice of values from a given model
+func getStructValues(model interface{}) []interface{} {
+	modelValue := reflect.ValueOf(model)
+	modelType := modelValue.Type()
+
+	if modelType.Kind() == reflect.Ptr {
+		modelType = modelType.Elem()
+		modelValue = modelValue.Elem()
+	}
+	if modelType.Kind() != reflect.Struct {
+		return nil // or panic / log an error
+	}
+
+	var values []interface{}
+	for i := 0; i < modelType.NumField(); i++ {
+		field := modelType.Field(i)
+		dbTag := strings.Split(field.Tag.Get("db"), ",")[0]
+		dbTag = strings.TrimSpace(dbTag)
+		if dbTag != "" && dbTag != "id" {
+			values = append(values, modelValue.Field(i).Interface())
+		}
+	}
+	return values
+}
+
+// ================ Database Operations ===================
+
 // GetTeachersCollection retrieves a collection of teachers from the database
 // with optional filtering and sorting.
 func GetTeachersInDb(teachers []models.Teacher, r *http.Request) ([]models.Teacher, error) {
@@ -203,7 +261,8 @@ func CreateTeachers(newTeachers []models.Teacher) ([]models.Teacher, error) {
 		}
 	}()
 
-	stmt, err := db.Prepare("INSERT INTO teachers (first_name, last_name, email, class, subject) VALUES (?, ?, ?, ?, ?)")
+	// stmt, err := db.Prepare("INSERT INTO teachers (first_name, last_name, email, class, subject) VALUES (?, ?, ?, ?, ?)")
+	stmt, err := db.Prepare(generateInsertQuery(models.Teacher{}, "teachers"))
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "Error inserting teacher data into database")
 	}
@@ -211,7 +270,9 @@ func CreateTeachers(newTeachers []models.Teacher) ([]models.Teacher, error) {
 
 	addedTeachers := make([]models.Teacher, len(newTeachers))
 	for i, newTeacher := range newTeachers {
-		res, err := stmt.Exec(newTeacher.FirstName, newTeacher.LastName, newTeacher.Email, newTeacher.Class, newTeacher.Subject)
+		// res, err := stmt.Exec(newTeacher.FirstName, newTeacher.LastName, newTeacher.Email, newTeacher.Class, newTeacher.Subject)
+		values := getStructValues(newTeacher)
+		res, err := stmt.Exec(values...)
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "Error inserting teacher data into database")
 		}
