@@ -331,7 +331,8 @@ func UpdateTeacherByID(id int, updatedTeacher models.Teacher) (models.Teacher, e
 		WHERE id = ?`
 
 	updatedTeacher.ID = teacherToUpdate.ID
-	_, err = db.Exec(updateTeacherQuery, updatedTeacher.FirstName, updatedTeacher.LastName, updatedTeacher.Email, updatedTeacher.Class, updatedTeacher.Subject, updatedTeacher.ID)
+	values := append(getStructValues(updatedTeacher), teacherToUpdate.ID)
+	_, err = db.Exec(updateTeacherQuery, values...)
 	if err != nil {
 		return models.Teacher{}, utils.ErrorHandler(err, "Error updating teacher in the database")
 	}
