@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"reflect"
 	"school_management_api/internal/models"
 	"school_management_api/internal/repository/sqlconnect"
 	"strconv"
+	"strings"
 )
 
 // GetTeachersHandler handles GET requests to fetch teachers
@@ -65,6 +67,29 @@ func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
 		return
+	}
+
+	val := reflect.TypeOf(models.Teacher{})
+	validFields := make(map[string]int)
+	for i := 0; i < val.NumField(); i++ {
+		field := val.Field(i)
+		jsonTag := strings.Split(field.Tag.Get("json"), ",")[0]
+		if jsonTag != "" {
+			validFields[jsonTag] = i
+		}
+	}
+
+	// Validate the newTeachers fields
+	for _, teacher := range newTeachers {
+		val := reflect.ValueOf(teacher)
+		for i := 0; i < val.NumField(); i++ {
+			field := val.Field(i)
+			fmt.Println(field)
+			if field.Kind() == reflect.String && field.Len() == 0 {
+				http.Error(w, "All fields (first_name, last_name, email, class, subject) are required", http.StatusBadRequest)
+				return
+			}
+		}
 	}
 
 	addedTeachers, err := sqlconnect.CreateTeachers(newTeachers)
