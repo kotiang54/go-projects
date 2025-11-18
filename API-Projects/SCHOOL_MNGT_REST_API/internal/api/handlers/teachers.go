@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"reflect"
@@ -60,23 +61,55 @@ func GetOneTeacherHandler(w http.ResponseWriter, r *http.Request) {
 
 // CreateTeachersHandler handles the creation of new teachers
 func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
-	// Decode the request body into a slice of Teacher structs
+
+	// Variable validations
 	var newTeachers []models.Teacher
-	err := json.NewDecoder(r.Body).Decode(&newTeachers)
+	var rawTeachers []map[string]any
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	err = json.Unmarshal(body, &rawTeachers)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
 		return
 	}
+	fmt.Println("Raw Teachers", rawTeachers)
 
+	// Build a map of valid JSON field names from struct tags.
+	// This will be used to validate the fields in the incoming request.
 	val := reflect.TypeOf(models.Teacher{})
-	validFields := make(map[string]int)
+	validFields := make(map[string]struct{})
 	for i := 0; i < val.NumField(); i++ {
 		field := val.Field(i)
 		jsonTag := strings.Split(field.Tag.Get("json"), ",")[0]
 		if jsonTag != "" {
-			validFields[jsonTag] = i
+			validFields[jsonTag] = struct{}{}
 		}
+	}
+
+	// Validate each teacher object in the incoming request
+	for _, teacher := range rawTeachers {
+		for key := range teacher {
+			if _, ok := validFields[key]; !ok {
+				http.Error(w, fmt.Sprintf("Unacceptable field: %s, found in request.", key), http.StatusBadRequest)
+				return
+			}
+		}
+	}
+
+	// Decode the request body into a slice of Teacher structs
+	err = json.Unmarshal(body, &newTeachers)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
+		fmt.Println("New Teachers:", newTeachers)
+		return
 	}
 
 	// Validate the newTeachers fields
@@ -84,7 +117,6 @@ func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		val := reflect.ValueOf(teacher)
 		for i := 0; i < val.NumField(); i++ {
 			field := val.Field(i)
-			fmt.Println(field)
 			if field.Kind() == reflect.String && field.Len() == 0 {
 				http.Error(w, "All fields (first_name, last_name, email, class, subject) are required", http.StatusBadRequest)
 				return
