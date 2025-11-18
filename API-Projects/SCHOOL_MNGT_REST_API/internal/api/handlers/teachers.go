@@ -6,11 +6,9 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"reflect"
 	"school_management_api/internal/models"
 	"school_management_api/internal/repository/sqlconnect"
 	"strconv"
-	"strings"
 )
 
 // GetTeachersHandler handles GET requests to fetch teachers
@@ -79,19 +77,9 @@ func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("Raw Teachers", rawTeachers)
 
-	// Build a map of valid JSON field names from struct tags.
-	// This will be used to validate the fields in the incoming request.
-	val := reflect.TypeOf(models.Teacher{})
-	validFields := make(map[string]struct{})
-	for i := 0; i < val.NumField(); i++ {
-		field := val.Field(i)
-		jsonTag := strings.Split(field.Tag.Get("json"), ",")[0]
-		if jsonTag != "" {
-			validFields[jsonTag] = struct{}{}
-		}
-	}
+	// Validate the fields in the incoming request.
+	validFields := GetFieldNames(models.Teacher{})
 
 	// Validate each teacher object in the incoming request
 	for _, teacher := range rawTeachers {
@@ -108,19 +96,16 @@ func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
-		fmt.Println("New Teachers:", newTeachers)
 		return
 	}
 
 	// Validate the newTeachers fields
 	for _, teacher := range newTeachers {
-		val := reflect.ValueOf(teacher)
-		for i := 0; i < val.NumField(); i++ {
-			field := val.Field(i)
-			if field.Kind() == reflect.String && field.Len() == 0 {
-				http.Error(w, "All fields (first_name, last_name, email, class, subject) are required", http.StatusBadRequest)
-				return
-			}
+		err = CheckBlankFields(teacher)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 	}
 
