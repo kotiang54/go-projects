@@ -4,29 +4,15 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
-	"reflect"
 	"school_management_api/internal/models"
 	"school_management_api/pkg/utils"
 	"strings"
 )
 
-// Add this interface for query compatibility
-type queryer interface {
-	QueryRow(query string, args ...interface{}) *sql.Row
-}
-
-// type dbHandler struct {
-// 	db *sql.DB
-// }
-
-// func (h *dbHandler) QueryRow(query string, args ...interface{}) *sql.Row {
-// 	return h.db.QueryRow(query, args...)
-// }
-
 // =========== Helper functions ===================
 
-// addFilters adds filtering conditions to the SQL query based on URL query parameters.
-func addFilters(r *http.Request, query string, args []interface{}) (string, []interface{}) {
+// addTeachersFilter adds filtering conditions to the SQL query based on URL query parameters.
+func addTeachersFilter(r *http.Request, query string, args []interface{}) (string, []interface{}) {
 	// Handle Query parameters for filtering
 	params := map[string]string{
 		"first_name": "first_name",
@@ -46,30 +32,6 @@ func addFilters(r *http.Request, query string, args []interface{}) (string, []in
 	return query, args
 }
 
-// Extracted function for building ORDER BY clause from sortby query parameters
-func buildOrderByClause(r *http.Request) string {
-	sortParams := r.URL.Query()["sortby"]
-	if len(sortParams) == 0 {
-		return ""
-	}
-	orderBy := " ORDER BY "
-	for i, param := range sortParams {
-		parts := strings.Split(param, ":")
-		if len(parts) == 2 {
-			field := parts[0]
-			order := strings.ToUpper(parts[1])
-			if order != "ASC" && order != "DESC" {
-				order = "ASC"
-			}
-			if i > 0 {
-				orderBy += ", "
-			}
-			orderBy += fmt.Sprintf("%s %s", field, order)
-		}
-	}
-	return orderBy
-}
-
 // getTeacherByID retrieves a teacher by ID from the database
 func getTeacherByID(db queryer, id int) (models.Teacher, error) {
 	var teacher models.Teacher
@@ -77,105 +39,6 @@ func getTeacherByID(db queryer, id int) (models.Teacher, error) {
 	err := db.QueryRow(query, id).
 		Scan(&teacher.ID, &teacher.FirstName, &teacher.LastName, &teacher.Email, &teacher.Class, &teacher.Subject)
 	return teacher, err
-}
-
-// buildValidFieldsMap builds a map of valid JSON field names to struct field indices
-func buildValidFieldsMap(teacher models.Teacher) map[string]int {
-	teacherType := reflect.TypeOf(teacher)
-	validFields := make(map[string]int)
-	for i := 0; i < teacherType.NumField(); i++ {
-		jsonTag := strings.Split(teacherType.Field(i).Tag.Get("json"), ",")[0]
-		if jsonTag != "" {
-			validFields[jsonTag] = i
-		}
-	}
-	return validFields
-}
-
-// validateUpdateFields checks if the fields in the update map are valid and of correct type
-func validateUpdateFields(validFields map[string]int, update map[string]interface{}) error {
-	for key, value := range update {
-		if key == "id" {
-			continue
-		}
-		fieldIdx, ok := validFields[key]
-		if !ok {
-			return fmt.Errorf("invalid field: %s", key)
-		}
-		fieldType := reflect.TypeOf(models.Teacher{}).Field(fieldIdx).Type
-		val := reflect.ValueOf(value)
-		if !val.Type().ConvertibleTo(fieldType) {
-			return fmt.Errorf("type mismatch for field: %s", key)
-		}
-	}
-	return nil
-}
-
-func applyUpdateToStruct(teacher *models.Teacher, validFields map[string]int, update map[string]interface{}) {
-	for key, value := range update {
-		if key == "id" {
-			continue
-		}
-		fieldIdx := validFields[key]
-		fieldVal := reflect.ValueOf(teacher).Elem().Field(fieldIdx)
-		val := reflect.ValueOf(value)
-		fieldVal.Set(val.Convert(fieldVal.Type()))
-	}
-}
-
-// generateInsertQuery generates an INSERT query for a given model
-func generateInsertQuery(model interface{}, tableName string) string {
-	modelType := reflect.TypeOf(model)
-	if modelType.Kind() == reflect.Ptr {
-		modelType = modelType.Elem()
-	}
-	if modelType.Kind() != reflect.Struct {
-		return "" // or panic / log an error
-	}
-
-	var columns, placeholders string
-
-	for i := 0; i < modelType.NumField(); i++ {
-		field := modelType.Field(i)
-		dbTag := strings.Split(field.Tag.Get("db"), ",")[0]
-		dbTag = strings.TrimSpace(dbTag)
-		if dbTag != "" && dbTag != "id" {
-			if len(columns) > 0 {
-				columns += ", "
-				placeholders += ", "
-			}
-			columns += dbTag
-			placeholders += "?"
-		}
-
-	}
-	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", tableName, columns, placeholders)
-	return query
-}
-
-// getStructValues returns a slice of values from a given model
-func getStructValues(model interface{}) []interface{} {
-	modelValue := reflect.ValueOf(model)
-	modelType := modelValue.Type()
-
-	if modelType.Kind() == reflect.Ptr {
-		modelType = modelType.Elem()
-		modelValue = modelValue.Elem()
-	}
-	if modelType.Kind() != reflect.Struct {
-		return nil // or panic / log an error
-	}
-
-	var values []interface{}
-	for i := 0; i < modelType.NumField(); i++ {
-		field := modelType.Field(i)
-		dbTag := strings.Split(field.Tag.Get("db"), ",")[0]
-		dbTag = strings.TrimSpace(dbTag)
-		if dbTag != "" && dbTag != "id" {
-			values = append(values, modelValue.Field(i).Interface())
-		}
-	}
-	return values
 }
 
 // ================ Database Operations ===================
@@ -198,7 +61,7 @@ func GetTeachersInDb(teachers []models.Teacher, r *http.Request) ([]models.Teach
 	var args []interface{}
 
 	// Add filters based on query parameters
-	query, args = addFilters(r, query, args)
+	query, args = addTeachersFilter(r, query, args)
 
 	// Example: /teachers/?sortby=last_name:asc&sortby=class:desc
 	query += buildOrderByClause(r)
@@ -366,7 +229,7 @@ func PatchTeachersInDb(updatedFields []map[string]interface{}) ([]models.Teacher
 		}
 
 		validFields := buildValidFieldsMap(teacherToUpdate)
-		if err := validateUpdateFields(validFields, teacherUpdate); err != nil {
+		if err := validateUpdateFields(models.Teacher{}, validFields, teacherUpdate); err != nil {
 			return teachersFromDB, utils.ErrorHandler(err, "Error updating teacher data into database")
 		}
 	}
@@ -441,7 +304,7 @@ func PatchTeacherByID(id int, updatedFields map[string]interface{}) (models.Teac
 	validFields := buildValidFieldsMap(teacherToUpdate)
 
 	// Validate fields to update using helper
-	if err := validateUpdateFields(validFields, updatedFields); err != nil {
+	if err := validateUpdateFields(models.Teacher{}, validFields, updatedFields); err != nil {
 		return models.Teacher{}, utils.ErrorHandler(err, "Error updating teacher data into database")
 	}
 
