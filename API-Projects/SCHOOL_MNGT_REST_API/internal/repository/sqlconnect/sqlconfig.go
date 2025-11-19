@@ -8,6 +8,19 @@ import (
 	_ "github.com/go-sql-driver/mysql" // Importing the MySQL driver
 )
 
+// Add this interface for query compatibility
+type queryer interface {
+	QueryRow(query string, args ...interface{}) *sql.Row
+}
+
+// type dbHandler struct {
+// 	db *sql.DB
+// }
+
+// func (h *dbHandler) QueryRow(query string, args ...interface{}) *sql.Row {
+// 	return h.db.QueryRow(query, args...)
+// }
+
 // ConnectDb establishes a connection to the MariaDB database with the given name.
 func ConnectDb() (*sql.DB, error) {
 

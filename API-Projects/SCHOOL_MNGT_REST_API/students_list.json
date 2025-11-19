@@ -1,0 +1,368 @@
+[
+    {
+        "first_name": "Jenny",
+        "last_name": "Simson",
+        "email": "jensimson@school.ac.edu",
+        "class": "9B"
+    },
+    {
+        "first_name": "Mitchel",
+        "last_name": "Doe",
+        "email": "mitdoe@school.ac.edu",
+        "class": "8A"
+    },
+    {
+        "first_name": "Carlson",
+        "last_name": "Stem",
+        "email": "carstem@school.ac.edu",
+        "class": "6B"
+    },
+    {
+        "first_name": "Olgarick",
+        "last_name": "Smith",
+        "email": "olgsmith@school.ac.edu",
+        "class": "9C"
+    },
+    {
+        "first_name": "August",
+        "last_name": "Freeman",
+        "email": "augfreeman@school.ac.edu",
+        "class": "9C"
+    },
+    {
+        "first_name": "Johnson",
+        "last_name": "Kelsey",
+        "email": "johkelsey@school.ac.edu",
+        "class": "7A"
+    },
+    {
+        "first_name": "Haven",
+        "last_name": "Suzzie",
+        "email": "havsuzzie@school.ac.edu",
+        "class": "6A"
+    },
+    {
+        "first_name": "Timothy",
+        "last_name": "Wilson",
+        "email": "timwilson@school.ac.edu",
+        "class": "8A"
+    },
+    {
+        "first_name": "Jingwon",
+        "last_name": "Choi",
+        "email": "jinchoi@school.ac.edu",
+        "class": "7A"
+    },
+    {
+        "first_name": "Kevin",
+        "last_name": "Drake",
+        "email": "kevdrake@school.ac.edu",
+        "class": "9B"
+    },
+    {
+        "first_name": "Ojijo",
+        "last_name": "Agalo",
+        "email": "ojiagalo@school.ac.edu",
+        "class": "6B"
+    },
+    {
+        "first_name": "Philemon",
+        "last_name": "West",
+        "email": "phiwest@school.ac.edu",
+        "class": "8A"
+    },
+    {
+        "first_name": "Maria",
+        "last_name": "Carter",
+        "email": "marcarter@school.ac.edu",
+        "class": "9B"
+    },
+    {
+        "first_name": "Joshua",
+        "last_name": "Ngugi",
+        "email": "josngugi@school.ac.edu",
+        "class": "6A"
+    },
+    {
+        "first_name": "Evelyn",
+        "last_name": "Bennett",
+        "email": "evebennett@school.ac.edu",
+        "class": "8A"
+    },
+    {
+        "first_name": "Daniel",
+        "last_name": "Lopez",
+        "email": "danlopez@school.ac.edu",
+        "class": "9C"
+    },
+    {
+        "first_name": "Sophia",
+        "last_name": "Owens",
+        "email": "sopowens@school.ac.edu",
+        "class": "10B"
+    },
+    {
+        "first_name": "Michael",
+        "last_name": "Mitchell",
+        "email": "micmitchell@school.ac.edu",
+        "class": "8B"
+    },
+    {
+        "first_name": "Layla",
+        "last_name": "Hughes",
+        "email": "layhughes@school.ac.edu",
+        "class": "7C"
+    },
+    {
+        "first_name": "Samuel",
+        "last_name": "Turner",
+        "email": "samturner@school.ac.edu",
+        "class": "6C"
+    },
+    {
+        "first_name": "Chloe",
+        "last_name": "Price",
+        "email": "choprice@school.ac.edu",
+        "class": "7A"
+    },
+    {
+        "first_name": "Anthony",
+        "last_name": "Douglas",
+        "email": "antdouglas@school.ac.edu",
+        "class": "9A"
+    },
+    {
+        "first_name": "Grace",
+        "last_name": "Foster",
+        "email": "grafoster@school.ac.edu",
+        "class": "8C"
+    },
+    {
+        "first_name": "Caleb",
+        "last_name": "King",
+        "email": "calking@school.ac.edu",
+        "class": "10A"
+    },
+    {
+        "first_name": "Nora",
+        "last_name": "Porter",
+        "email": "norporter@school.ac.edu",
+        "class": "7B"
+    },
+    {
+        "first_name": "Jordan",
+        "last_name": "Ramsey",
+        "email": "jorramsey@school.ac.edu",
+        "class": "6A"
+    },
+    {
+        "first_name": "Olivia",
+        "last_name": "Coleman",
+        "email": "olicoleman@school.ac.edu",
+        "class": "9C"
+    },
+    {
+        "first_name": "Ethan",
+        "last_name": "Diaz",
+        "email": "ethdiaz@school.ac.edu",
+        "class": "8A"
+    },
+    {
+        "first_name": "Zara",
+        "last_name": "Hayes",
+        "email": "zarhayes@school.ac.edu",
+        "class": "7C"
+    },
+    {
+        "first_name": "Logan",
+        "last_name": "Walker",
+        "email": "logwalker@school.ac.edu",
+        "class": "6B"
+    },
+    {
+        "first_name": "Naomi",
+        "last_name": "Morris",
+        "email": "naomorris@school.ac.edu",
+        "class": "10C"
+    },
+    {
+        "first_name": "Isaac",
+        "last_name": "Howard",
+        "email": "isahoward@school.ac.edu",
+        "class": "7A"
+    },
+    {
+        "first_name": "Riley",
+        "last_name": "Gibson",
+        "email": "rilgibson@school.ac.edu",
+        "class": "8B"
+    },
+    {
+        "first_name": "Mason",
+        "last_name": "Reid",
+        "email": "masreid@school.ac.edu",
+        "class": "9B"
+    },
+    {
+        "first_name": "Ariana",
+        "last_name": "Newton",
+        "email": "arinewton@school.ac.edu",
+        "class": "6C"
+    },
+    {
+        "first_name": "Gideon",
+        "last_name": "Armstrong",
+        "email": "gidarmstrong@school.ac.edu",
+        "class": "10A"
+    },
+    {
+        "first_name": "Stella",
+        "last_name": "Brooks",
+        "email": "stebrooks@school.ac.edu",
+        "class": "7B"
+    },
+    {
+        "first_name": "Victor",
+        "last_name": "Harris",
+        "email": "vicharris@school.ac.edu",
+        "class": "8C"
+    },
+    {
+        "first_name": "Hazel",
+        "last_name": "Lawson",
+        "email": "hazlawson@school.ac.edu",
+        "class": "9A"
+    },
+    {
+        "first_name": "Brandon",
+        "last_name": "Grant",
+        "email": "bragrant@school.ac.edu",
+        "class": "6A"
+    },
+    {
+        "first_name": "Lydia",
+        "last_name": "Kelly",
+        "email": "lydkelly@school.ac.edu",
+        "class": "7C"
+    },
+    {
+        "first_name": "Xavier",
+        "last_name": "Parker",
+        "email": "xavparker@school.ac.edu",
+        "class": "10B"
+    },
+    {
+        "first_name": "Elena",
+        "last_name": "Reynolds",
+        "email": "elereynolds@school.ac.edu",
+        "class": "8A"
+    },
+    {
+        "first_name": "Darius",
+        "last_name": "Bryant",
+        "email": "darbryant@school.ac.edu",
+        "class": "9C"
+    },
+    {
+        "first_name": "Mila",
+        "last_name": "Wallace",
+        "email": "milwallace@school.ac.edu",
+        "class": "7A"
+    },
+    {
+        "first_name": "Leonard",
+        "last_name": "Sims",
+        "email": "leosims@school.ac.edu",
+        "class": "6B"
+    },
+    {
+        "first_name": "Ruby",
+        "last_name": "Perkins",
+        "email": "rubperkins@school.ac.edu",
+        "class": "9B"
+    },
+    {
+        "first_name": "Trevor",
+        "last_name": "Stone",
+        "email": "trestone@school.ac.edu",
+        "class": "8C"
+    },
+    {
+        "first_name": "Alice",
+        "last_name": "Manning",
+        "email": "alimanning@school.ac.edu",
+        "class": "10A"
+    },
+    {
+        "first_name": "Marcus",
+        "last_name": "Cross",
+        "email": "marcross@school.ac.edu",
+        "class": "7B"
+    },
+    {
+        "first_name": "Ivy",
+        "last_name": "Fuller",
+        "email": "ivyfuller@school.ac.edu",
+        "class": "6C"
+    },
+    {
+        "first_name": "Phillip",
+        "last_name": "Holland",
+        "email": "phiholland@school.ac.edu",
+        "class": "10C"
+    },
+    {
+        "first_name": "Jade",
+        "last_name": "Atkins",
+        "email": "jadatkins@school.ac.edu",
+        "class": "8B"
+    },
+    {
+        "first_name": "Steven",
+        "last_name": "Burke",
+        "email": "steburke@school.ac.edu",
+        "class": "9A"
+    },
+    {
+        "first_name": "Tessa",
+        "last_name": "Carson",
+        "email": "tescarson@school.ac.edu",
+        "class": "7C"
+    },
+    {
+        "first_name": "Harold",
+        "last_name": "Greene",
+        "email": "hargreene@school.ac.edu",
+        "class": "6A"
+    },
+    {
+        "first_name": "Camila",
+        "last_name": "Jennings",
+        "email": "camjennings@school.ac.edu",
+        "class": "8A"
+    },
+    {
+        "first_name": "Nelson",
+        "last_name": "Larson",
+        "email": "nellarson@school.ac.edu",
+        "class": "9C"
+    },
+    {
+        "first_name": "Paige",
+        "last_name": "Matthews",
+        "email": "paimatthews@school.ac.edu",
+        "class": "7A"
+    },
+    {
+        "first_name": "Rowan",
+        "last_name": "Nash",
+        "email": "rownash@school.ac.edu",
+        "class": "10B"
+    },
+    {
+        "first_name": "Daphne",
+        "last_name": "Palmer",
+        "email": "dappalmer@school.ac.edu",
+        "class": "6B"
+    }
+]
