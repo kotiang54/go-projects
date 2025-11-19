@@ -37,7 +37,7 @@ func Router() *http.ServeMux {
 	mux.HandleFunc("DELETE /students/{id}", handlers.DeleteOneStudentHandler)
 
 	// Executives route
-	mux.HandleFunc("/executives/", handlers.ExecutivesHandler)
+	mux.HandleFunc("GET /executives/", handlers.ExecutivesHandler)
 
 	return mux
 }
