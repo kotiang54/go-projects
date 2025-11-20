@@ -153,7 +153,7 @@ func UpdateStudentsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Validate the updatedStudent fields
 	if updatedStudent.FirstName == "" || updatedStudent.LastName == "" || updatedStudent.Email == "" || updatedStudent.Class == "" {
-		http.Error(w, "All fields (first_name, last_name, email, class, teacher_id) are required", http.StatusBadRequest)
+		http.Error(w, "All fields (first_name, last_name, email, class) are required", http.StatusBadRequest)
 		return
 	}
 
