@@ -1,4 +1,4 @@
-package sqlconnect
+package utils
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 )
 
 // validateUpdateFields checks if the fields in the update map are valid and of correct type
-func validateUpdateFields(model interface{}, validFields map[string]int, update map[string]interface{}) error {
+func ValidateUpdateFields(model interface{}, validFields map[string]int, update map[string]interface{}) error {
 	for key, value := range update {
 		if key == "id" {
 			continue
@@ -27,7 +27,7 @@ func validateUpdateFields(model interface{}, validFields map[string]int, update 
 }
 
 // Extracted function for building ORDER BY clause from sortby query parameters
-func buildOrderByClause(r *http.Request) string {
+func BuildOrderByClause(r *http.Request) string {
 	sortParams := r.URL.Query()["sortby"]
 	if len(sortParams) == 0 {
 		return ""
@@ -51,7 +51,7 @@ func buildOrderByClause(r *http.Request) string {
 }
 
 // buildValidFieldsMap builds a map of valid JSON field names to struct field indices
-func buildValidFieldsMap(person interface{}) map[string]int {
+func BuildValidFieldsMap(person interface{}) map[string]int {
 	personType := reflect.TypeOf(person)
 	validFields := make(map[string]int)
 	for i := 0; i < personType.NumField(); i++ {
@@ -63,7 +63,7 @@ func buildValidFieldsMap(person interface{}) map[string]int {
 	return validFields
 }
 
-func applyUpdateToStruct(person interface{}, validFields map[string]int, update map[string]interface{}) {
+func ApplyUpdateToStruct(person interface{}, validFields map[string]int, update map[string]interface{}) {
 	for key, value := range update {
 		if key == "id" {
 			continue
@@ -76,7 +76,7 @@ func applyUpdateToStruct(person interface{}, validFields map[string]int, update 
 }
 
 // getStructValues returns a slice of values from a given model
-func getStructValues(model interface{}) []interface{} {
+func GetStructValues(model interface{}) []interface{} {
 	modelValue := reflect.ValueOf(model)
 	modelType := modelValue.Type()
 
@@ -101,7 +101,7 @@ func getStructValues(model interface{}) []interface{} {
 }
 
 // generateInsertQuery generates an INSERT query for a given model
-func generateInsertQuery(model interface{}, tableName string) string {
+func GenerateInsertQuery(model interface{}, tableName string) string {
 	modelType := reflect.TypeOf(model)
 	if modelType.Kind() == reflect.Ptr {
 		modelType = modelType.Elem()
