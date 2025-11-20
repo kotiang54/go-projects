@@ -6,5 +6,4 @@ type Student struct {
 	LastName  string `json:"last_name,omitempty" db:"last_name"`
 	Email     string `json:"email,omitempty" db:"email"`
 	Class     string `json:"class,omitempty" db:"class"`
-	TeacherID int    `json:"teacher_id,omitempty" db:"teacher_id"`
 }
