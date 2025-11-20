@@ -64,7 +64,7 @@ func GetTeachersInDb(teachers []models.Teacher, r *http.Request) ([]models.Teach
 	query, args = addTeachersFilter(r, query, args)
 
 	// Example: /teachers/?sortby=last_name:asc&sortby=class:desc
-	query += buildOrderByClause(r)
+	query += utils.BuildOrderByClause(r)
 
 	// Execute the query
 	rows, err := db.Query(query, args...)
@@ -125,7 +125,7 @@ func CreateTeachers(newTeachers []models.Teacher) ([]models.Teacher, error) {
 	}()
 
 	// stmt, err := db.Prepare("INSERT INTO teachers (first_name, last_name, email, class, subject) VALUES (?, ?, ?, ?, ?)")
-	stmt, err := db.Prepare(generateInsertQuery(models.Teacher{}, "teachers"))
+	stmt, err := db.Prepare(utils.GenerateInsertQuery(models.Teacher{}, "teachers"))
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "Error inserting teacher data into database")
 	}
@@ -134,7 +134,7 @@ func CreateTeachers(newTeachers []models.Teacher) ([]models.Teacher, error) {
 	addedTeachers := make([]models.Teacher, len(newTeachers))
 	for i, newTeacher := range newTeachers {
 		// res, err := stmt.Exec(newTeacher.FirstName, newTeacher.LastName, newTeacher.Email, newTeacher.Class, newTeacher.Subject)
-		values := getStructValues(newTeacher)
+		values := utils.GetStructValues(newTeacher)
 		res, err := stmt.Exec(values...)
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "Error inserting teacher data into database")
@@ -194,7 +194,7 @@ func UpdateTeacherByID(id int, updatedTeacher models.Teacher) (models.Teacher, e
 		WHERE id = ?`
 
 	updatedTeacher.ID = teacherToUpdate.ID
-	values := append(getStructValues(updatedTeacher), teacherToUpdate.ID)
+	values := append(utils.GetStructValues(updatedTeacher), teacherToUpdate.ID)
 	_, err = db.Exec(updateTeacherQuery, values...)
 	if err != nil {
 		return models.Teacher{}, utils.ErrorHandler(err, "Error updating teacher in the database")
@@ -228,8 +228,8 @@ func PatchTeachersInDb(updatedFields []map[string]interface{}) ([]models.Teacher
 			return teachersFromDB, utils.ErrorHandler(err, "Error updating teacher data into database")
 		}
 
-		validFields := buildValidFieldsMap(teacherToUpdate)
-		if err := validateUpdateFields(models.Teacher{}, validFields, teacherUpdate); err != nil {
+		validFields := utils.BuildValidFieldsMap(teacherToUpdate)
+		if err := utils.ValidateUpdateFields(models.Teacher{}, validFields, teacherUpdate); err != nil {
 			return teachersFromDB, utils.ErrorHandler(err, "Error updating teacher data into database")
 		}
 	}
@@ -247,8 +247,8 @@ func PatchTeachersInDb(updatedFields []map[string]interface{}) ([]models.Teacher
 			return teachersFromDB, utils.ErrorHandler(err, fmt.Sprintf("Teacher with ID: %d not found in database", id))
 		}
 
-		validFields := buildValidFieldsMap(teacherToUpdate)
-		applyUpdateToStruct(&teacherToUpdate, validFields, teacherUpdate)
+		validFields := utils.BuildValidFieldsMap(teacherToUpdate)
+		utils.ApplyUpdateToStruct(&teacherToUpdate, validFields, teacherUpdate)
 
 		var updateFields []string
 		var updateArgs []interface{}
@@ -301,15 +301,15 @@ func PatchTeacherByID(id int, updatedFields map[string]interface{}) (models.Teac
 	}
 
 	// Build valid fields map using helper
-	validFields := buildValidFieldsMap(teacherToUpdate)
+	validFields := utils.BuildValidFieldsMap(teacherToUpdate)
 
 	// Validate fields to update using helper
-	if err := validateUpdateFields(models.Teacher{}, validFields, updatedFields); err != nil {
+	if err := utils.ValidateUpdateFields(models.Teacher{}, validFields, updatedFields); err != nil {
 		return models.Teacher{}, utils.ErrorHandler(err, "Error updating teacher data into database")
 	}
 
 	// Apply updates to struct using helper
-	applyUpdateToStruct(&teacherToUpdate, validFields, updatedFields)
+	utils.ApplyUpdateToStruct(&teacherToUpdate, validFields, updatedFields)
 
 	// Build update query and args
 	var updateFields []string

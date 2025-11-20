@@ -63,7 +63,7 @@ func GetStudentsInDb(students []models.Student, r *http.Request) ([]models.Stude
 	query, args = addStudentsFilter(r, query, args)
 
 	// Example: /students/?sortby=last_name:asc&sortby=class:desc
-	query += buildOrderByClause(r)
+	query += utils.BuildOrderByClause(r)
 
 	// Execute the query
 	rows, err := db.Query(query, args...)
@@ -123,7 +123,7 @@ func CreateStudents(newStudents []models.Student) ([]models.Student, error) {
 	}()
 
 	// stmt, err := db.Prepare("INSERT INTO students (first_name, last_name, email, class) VALUES (?, ?, ?, ?)")
-	stmt, err := db.Prepare(generateInsertQuery(models.Student{}, "students"))
+	stmt, err := db.Prepare(utils.GenerateInsertQuery(models.Student{}, "students"))
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "Error inserting student data into database")
 	}
@@ -132,7 +132,7 @@ func CreateStudents(newStudents []models.Student) ([]models.Student, error) {
 	addedStudents := make([]models.Student, len(newStudents))
 
 	for i, newStudent := range newStudents {
-		values := getStructValues(newStudent)
+		values := utils.GetStructValues(newStudent)
 		res, err := stmt.Exec(values...)
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "Error inserting student data into database")
@@ -191,7 +191,7 @@ func UpdateStudentByID(id int, updatedStudent models.Student) (models.Student, e
 		WHERE id = ?`
 
 	updatedStudent.ID = studentToUpdate.ID
-	values := append(getStructValues(updatedStudent), studentToUpdate.ID)
+	values := append(utils.GetStructValues(updatedStudent), studentToUpdate.ID)
 	_, err = db.Exec(updateStudentQuery, values...)
 	if err != nil {
 		return models.Student{}, utils.ErrorHandler(err, "Error updating student in the database")
@@ -225,8 +225,8 @@ func PatchStudentsInDb(updatedFields []map[string]interface{}) ([]models.Student
 			return studentsFromDB, utils.ErrorHandler(err, "Error updating student data into database")
 		}
 
-		validFields := buildValidFieldsMap(studentToUpdate)
-		if err := validateUpdateFields(models.Student{}, validFields, studentUpdate); err != nil {
+		validFields := utils.BuildValidFieldsMap(studentToUpdate)
+		if err := utils.ValidateUpdateFields(models.Student{}, validFields, studentUpdate); err != nil {
 			return studentsFromDB, utils.ErrorHandler(err, "Error updating student data into database")
 		}
 	}
@@ -244,8 +244,8 @@ func PatchStudentsInDb(updatedFields []map[string]interface{}) ([]models.Student
 			return studentsFromDB, utils.ErrorHandler(err, fmt.Sprintf("student with ID: %d not found in database", id))
 		}
 
-		validFields := buildValidFieldsMap(studentToUpdate)
-		applyUpdateToStruct(&studentToUpdate, validFields, studentUpdate)
+		validFields := utils.BuildValidFieldsMap(studentToUpdate)
+		utils.ApplyUpdateToStruct(&studentToUpdate, validFields, studentUpdate)
 
 		var updateFields []string
 		var updateArgs []interface{}
@@ -298,15 +298,15 @@ func PatchStudentByID(id int, updatedFields map[string]interface{}) (models.Stud
 	}
 
 	// Build valid fields map using helper
-	validFields := buildValidFieldsMap(studentToUpdate)
+	validFields := utils.BuildValidFieldsMap(studentToUpdate)
 
 	// Validate fields to update using helper
-	if err := validateUpdateFields(models.Student{}, validFields, updatedFields); err != nil {
+	if err := utils.ValidateUpdateFields(models.Student{}, validFields, updatedFields); err != nil {
 		return models.Student{}, utils.ErrorHandler(err, "Error updating student data into database")
 	}
 
 	// Apply updates to struct using helper
-	applyUpdateToStruct(&studentToUpdate, validFields, updatedFields)
+	utils.ApplyUpdateToStruct(&studentToUpdate, validFields, updatedFields)
 
 	// Build update query and args
 	var updateFields []string
