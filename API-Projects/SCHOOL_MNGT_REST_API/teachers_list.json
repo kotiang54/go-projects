@@ -31,7 +31,7 @@
         "first_name": "Austin",
         "last_name": "Friday",
         "email": "afriday@school.ac.edu",
-        "class": "9C",
+        "class": "10A",
         "subject": "Math"
     },
     {
@@ -59,35 +59,49 @@
         "first_name": "Lee",
         "last_name": "Jingwoon",
         "email": "ljingwoon@school.ac.edu",
-        "class": "6A",
+        "class": "6C",
         "subject": "English"
     },
     {
         "first_name": "Kennedy",
         "last_name": "Smith",
         "email": "ksmith@school.ac.edu",
-        "class": "9B",
+        "class": "10B",
         "subject": "Math"
     },
     {
         "first_name": "Otieno",
         "last_name": "Owiti",
         "email": "oowiti@school.ac.edu",
-        "class": "6B",
+        "class": "7B",
         "subject": "Swahili"
     },
     {
         "first_name": "Phong",
         "last_name": "Tseng",
         "email": "ptseng@school.ac.edu",
-        "class": "8A",
+        "class": "8B",
         "subject": "Literature"
     },
     {
         "first_name": "Latisha",
         "last_name": "Monday",
         "email": "lmonday@school.ac.edu",
-        "class": "9A",
+        "class": "10C",
         "subject": "History"
+    },
+    {
+        "first_name": "Brenda",
+        "last_name": "Khan",
+        "email": "bkhan@school.ac.edu",
+        "class": "7C",
+        "subject": "Science"
+    },
+    {
+        "first_name": "Hiro",
+        "last_name": "Tanaka",
+        "email": "htanaka@school.ac.edu",
+        "class": "8C",
+        "subject": "Computer Science"
     }
 ]

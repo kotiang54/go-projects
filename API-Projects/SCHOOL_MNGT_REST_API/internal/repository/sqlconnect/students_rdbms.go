@@ -19,6 +19,7 @@ func addStudentsFilter(r *http.Request, query string, args []interface{}) (strin
 		"last_name":  "last_name",
 		"email":      "email",
 		"class":      "class",
+		"teacher_id": "teacher_id",
 	}
 
 	for param, dbField := range params {
@@ -36,7 +37,7 @@ func getStudentByID(db queryer, id int) (models.Student, error) {
 	var student models.Student
 	query := "SELECT * FROM students WHERE id = ?"
 	err := db.QueryRow(query, id).
-		Scan(&student.ID, &student.FirstName, &student.LastName, &student.Email, &student.Class)
+		Scan(&student.ID, &student.FirstName, &student.LastName, &student.Email, &student.Class, &student.TeacherID)
 	return student, err
 }
 
@@ -56,7 +57,7 @@ func GetStudentsInDb(students []models.Student, r *http.Request) ([]models.Stude
 	}()
 
 	// Build the SQL query with filters
-	query := "SELECT * FROM students WHERE 1=1" // * id, first_name, last_name, email, class
+	query := "SELECT * FROM students WHERE 1=1" // * id, first_name, last_name, email, class, teacher_id
 	var args []interface{}
 
 	// Add filters based on query parameters
@@ -75,7 +76,7 @@ func GetStudentsInDb(students []models.Student, r *http.Request) ([]models.Stude
 
 	for rows.Next() {
 		var student models.Student
-		if err := rows.Scan(&student.ID, &student.FirstName, &student.LastName, &student.Email, &student.Class); err != nil {
+		if err := rows.Scan(&student.ID, &student.FirstName, &student.LastName, &student.Email, &student.Class, &student.TeacherID); err != nil {
 			return nil, utils.ErrorHandler(err, "Error retrieving students from database")
 		}
 		students = append(students, student)
@@ -99,7 +100,7 @@ func GetStudentByID(id int) (models.Student, error) {
 	var student models.Student
 	query := "SELECT * FROM students WHERE id = ?" // id, first_name, last_name, email, class
 	err = db.QueryRow(query, id).
-		Scan(&student.ID, &student.FirstName, &student.LastName, &student.Email, &student.Class)
+		Scan(&student.ID, &student.FirstName, &student.LastName, &student.Email, &student.Class, &student.TeacherID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -122,7 +123,7 @@ func CreateStudents(newStudents []models.Student) ([]models.Student, error) {
 		}
 	}()
 
-	// stmt, err := db.Prepare("INSERT INTO students (first_name, last_name, email, class) VALUES (?, ?, ?, ?)")
+	// stmt, err := db.Prepare("INSERT INTO students (first_name, last_name, email, class, teacher_id) VALUES (?, ?, ?, ?, ?)")
 	stmt, err := db.Prepare(utils.GenerateInsertQuery(models.Student{}, "students"))
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "Error inserting student data into database")
@@ -167,7 +168,7 @@ func UpdateStudentByID(id int, updatedStudent models.Student) (models.Student, e
 	query := "SELECT * FROM students WHERE id = ?"
 	var studentToUpdate models.Student
 	err = db.QueryRow(query, id).
-		Scan(&studentToUpdate.ID, &studentToUpdate.FirstName, &studentToUpdate.LastName, &studentToUpdate.Email, &studentToUpdate.Class)
+		Scan(&studentToUpdate.ID, &studentToUpdate.FirstName, &studentToUpdate.LastName, &studentToUpdate.Email, &studentToUpdate.Class, &studentToUpdate.TeacherID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -180,14 +181,15 @@ func UpdateStudentByID(id int, updatedStudent models.Student) (models.Student, e
 	if updatedStudent.FirstName == studentToUpdate.FirstName &&
 		updatedStudent.LastName == studentToUpdate.LastName &&
 		updatedStudent.Email == studentToUpdate.Email &&
-		updatedStudent.Class == studentToUpdate.Class {
+		updatedStudent.Class == studentToUpdate.Class &&
+		updatedStudent.TeacherID == studentToUpdate.TeacherID {
 
 		return models.Student{}, fmt.Errorf("no changes detected in the student's details")
 	}
 
 	const updateStudentQuery = `
 		UPDATE students
-		SET first_name = ?, last_name = ?, email = ?, class = ?
+		SET first_name = ?, last_name = ?, email = ?, class = ?, teacher_id = ?
 		WHERE id = ?`
 
 	updatedStudent.ID = studentToUpdate.ID
