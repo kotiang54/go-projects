@@ -7,6 +7,29 @@ import (
 	"strings"
 )
 
+func GetIDFromMap(m map[string]interface{}) (int, error) {
+	idVal, exists := m["id"]
+	if !exists {
+		return 0, fmt.Errorf("id field is missing")
+	}
+
+	// Try multiple numeric type assertions
+	switch v := idVal.(type) {
+	case float64:
+		return int(v), nil
+	case int:
+		return v, nil
+	case int64:
+		return int(v), nil
+	case int32:
+		return int(v), nil
+	case float32:
+		return int(v), nil
+	default:
+		return 0, fmt.Errorf("id field is not a valid numeric type, got %T", v)
+	}
+}
+
 // validateUpdateFields checks if the fields in the update map are valid and of correct type
 func ValidateUpdateFields(model interface{}, validFields map[string]int, update map[string]interface{}) error {
 	for key, value := range update {
