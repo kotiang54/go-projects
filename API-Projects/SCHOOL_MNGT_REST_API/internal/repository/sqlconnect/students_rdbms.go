@@ -135,6 +135,10 @@ func CreateStudents(newStudents []models.Student) ([]models.Student, error) {
 		values := utils.GetStructValues(newStudent)
 		res, err := stmt.Exec(values...)
 		if err != nil {
+			if strings.Contains(err.Error(),
+				"a foreign key constraint fails (`school_management`.`students`, CONSTRAINT `students_ibfk_1` FOREIGN KEY (`class`) REFERENCES `teachers` (`class`))") {
+				return nil, utils.ErrorHandler(err, "class/class teacher does not exist!")
+			}
 			return nil, utils.ErrorHandler(err, "Error inserting student data into database")
 		}
 
@@ -211,11 +215,10 @@ func PatchStudentsInDb(updatedFields []map[string]interface{}) ([]models.Student
 
 	// Validate all fields before starting the transaction
 	for _, studentUpdate := range updatedFields {
-		idFloat, ok := studentUpdate["id"].(float64)
-		if !ok {
+		id, err := utils.GetIDFromMap(studentUpdate)
+		if err != nil {
 			return studentsFromDB, utils.ErrorHandler(err, "Error updating student data into database")
 		}
-		id := int(idFloat)
 
 		studentToUpdate, err := getStudentByID(db, id)
 		if err != nil {
@@ -237,7 +240,11 @@ func PatchStudentsInDb(updatedFields []map[string]interface{}) ([]models.Student
 	}
 
 	for _, studentUpdate := range updatedFields {
-		id := int(studentUpdate["id"].(float64))
+		id, err := utils.GetIDFromMap(studentUpdate)
+		if err != nil {
+			tx.Rollback()
+			return studentsFromDB, utils.ErrorHandler(err, "Error updating student data into database")
+		}
 		studentToUpdate, err := getStudentByID(tx, id)
 		if err != nil {
 			tx.Rollback()
