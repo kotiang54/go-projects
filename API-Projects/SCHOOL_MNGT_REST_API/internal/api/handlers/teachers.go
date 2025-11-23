@@ -73,7 +73,6 @@ func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = json.Unmarshal(body, &rawTeachers)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
 		return
 	}
@@ -94,7 +93,6 @@ func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 	// Decode the request body into a slice of Teacher structs
 	err = json.Unmarshal(body, &newTeachers)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
 		return
 	}
@@ -111,7 +109,6 @@ func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
 	addedTeachers, err := sqlconnect.CreateTeachers(newTeachers)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -293,5 +290,28 @@ func DeleteTeachersHandler(w http.ResponseWriter, r *http.Request) {
 		DeletedIDs: deletedIDs,
 	}
 
+	json.NewEncoder(w).Encode(response)
+}
+
+func GetStudentsByTeacherIDHandler(w http.ResponseWriter, r *http.Request) {
+	teacherId := r.PathValue("id")
+
+	students, err := sqlconnect.GetStudentsByTeacherID(teacherId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := struct {
+		Status string           `json:"status"`
+		Count  int              `json:"count"`
+		Data   []models.Student `json:"data"`
+	}{
+		Status: "success",
+		Count:  len(students),
+		Data:   students,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
