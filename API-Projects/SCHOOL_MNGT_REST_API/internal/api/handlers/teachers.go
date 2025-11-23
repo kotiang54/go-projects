@@ -315,3 +315,24 @@ func GetStudentsByTeacherIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+func GetStudentCountByTeacherIDHandler(w http.ResponseWriter, r *http.Request) {
+	teacherId := r.PathValue("id")
+
+	studentCount, err := sqlconnect.GetStudentCountByTeacherID(teacherId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	response := struct {
+		Status string `json:"status"`
+		Count  int    `json:"count"`
+	}{
+		Status: "success",
+		Count:  studentCount,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
