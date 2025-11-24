@@ -2,25 +2,46 @@ package handlers
 
 import "net/http"
 
-func ExecutivesHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		w.Write([]byte("Hello GET method on Executives Route"))
-		return
+func GetExecutivesHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for fetching executives
+}
 
-	case http.MethodPost:
-		w.Write([]byte("Hello POST method on Executives Route"))
-		return
-	case http.MethodPut:
-		w.Write([]byte("Hello PUT method on Executives Route"))
-		return
+func CreateExecutivesHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for creating an executive
+}
 
-	case http.MethodPatch:
-		w.Write([]byte("Hello PATCH method on Executives Route"))
-		return
+func PatchExecutivesHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for patching executives
+}
 
-	case http.MethodDelete:
-		w.Write([]byte("Hello DELETE method on Executives Route"))
-		return
-	}
+func GetOneExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for fetching a specific executive
+}
+
+func PatchOneExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for patching a specific executive
+}
+
+func DeleteOneExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for deleting a specific executive
+}
+
+func UpdatePasswordExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for updating an executive's password
+}
+
+func LoginExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for executive login
+}
+
+func LogoutExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for executive logout
+}
+
+func ForgotPasswordExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for forgot password functionality
+}
+
+func ResetPasswordExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+	// Implementation for resetting password functionality
 }

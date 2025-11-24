@@ -62,7 +62,7 @@ func CreateTeachersHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Variable validations
 	var newTeachers []models.Teacher
-	var rawTeachers []map[string]any
+	var rawTeachers []map[string]interface{}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
