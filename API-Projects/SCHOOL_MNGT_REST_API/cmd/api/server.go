@@ -40,7 +40,7 @@ func main() {
 	}
 
 	// Initialize the router
-	router := router.Router()
+	router := router.MainRouter()
 
 	// rate limiting middleware can be added here
 	// rl := mw.NewRateLimiter(5, time.Minute)
