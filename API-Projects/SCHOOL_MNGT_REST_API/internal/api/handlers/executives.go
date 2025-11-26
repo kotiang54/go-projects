@@ -1,23 +1,15 @@
 package handlers
 
 import (
-	"crypto/subtle"
-	"database/sql"
-	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"school_management_api/internal/models"
 	"school_management_api/internal/repository/sqlconnect"
-	"school_management_api/pkg/utils"
 	"strconv"
-	"strings"
 	"time"
-
-	"golang.org/x/crypto/argon2"
 )
 
 func GetExecutivesHandler(w http.ResponseWriter, r *http.Request) {
@@ -219,12 +211,13 @@ func DeleteOneExecutiveHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// UpdatePasswordHandler handles executive password update requests.
 func UpdatePasswordHandler(w http.ResponseWriter, r *http.Request) {
-	// Implementation for updating an executive's password
+	// TODO:
 }
 
+// LoginHandler handles executive login requests.
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	// Implementation for executive login
 	var req models.Executive
 
 	// data validation
@@ -240,69 +233,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// search for user if exists
-	db, err := sqlconnect.ConnectDb()
+	err = sqlconnect.ExecLogin(req.Username, req.Password)
 	if err != nil {
-		http.Error(w, "Database connection error", http.StatusInternalServerError)
-		return
-	}
-	defer db.Close()
-
-	var userExec models.Executive
-	query := "SELECT id, first_name, last_name, email, username, password, inactive_status, role FROM execs WHERE username = ?"
-	err = db.QueryRow(query, req.Username).
-		Scan(&userExec.ID, &userExec.FirstName, &userExec.LastName, &userExec.Email, &userExec.Username, &userExec.Password, &userExec.InactiveStatus, &userExec.Role)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			http.Error(w, "Executive not found", http.StatusNotFound)
-			return
-		}
-		http.Error(w, "database query error", http.StatusNotFound)
-		return
-	}
-
-	// is user active
-	if userExec.InactiveStatus {
-		http.Error(w, "Executive account is inactive", http.StatusForbidden)
-		return
-	}
-
-	// verify password
-	// split stored password into salt and hash
-	parts := strings.Split(userExec.Password, ".")
-	if len(parts) != 2 {
-		utils.ErrorHandler(errors.New("invalid stored password format"), "invalid encoded hash format")
-		http.Error(w, "Invalid stored password format", http.StatusForbidden)
-		return
-	}
-
-	saltBase64, hashBase64 := parts[0], parts[1]
-	salt, err := base64.StdEncoding.DecodeString(saltBase64)
-	if err != nil {
-		utils.ErrorHandler(err, "failed to decode the salt")
-		http.Error(w, "Failed to decode the salt", http.StatusForbidden)
-		return
-	}
-
-	hashedPassword, err := base64.StdEncoding.DecodeString(hashBase64)
-	if err != nil {
-		utils.ErrorHandler(err, "failed to decode the hashed password")
-		http.Error(w, "Failed to decode the hashed password", http.StatusForbidden)
-		return
-	}
-
-	hash := argon2.IDKey([]byte(req.Password), salt, 1, 64*1024, 4, 32)
-
-	if len(hash) != len(hashedPassword) {
-		utils.ErrorHandler(errors.New("incorrect password"), "password verification failed")
-		http.Error(w, "Incorrect password", http.StatusForbidden)
-		return
-	}
-
-	// constant time comparison to prevent timing attacks
-	if subtle.ConstantTimeCompare(hash, hashedPassword) != 1 {
-		utils.ErrorHandler(errors.New("incorrect password"), "password verification failed")
-		http.Error(w, "Incorrect password", http.StatusForbidden)
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
