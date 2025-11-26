@@ -1,0 +1,26 @@
+[
+  {
+    "first_name": "Jonnathan",
+    "last_name": "Doe",
+    "email": "jonnathan.doe@example.com",
+    "username": "johndoe",
+    "password": "hashed_password1",
+    "role": "admin"
+    },
+    {
+      "first_name": "Alice",
+      "last_name": "Smith",
+      "email": "alice.smith@example.com",
+      "username": "alicesmith",
+      "password": "hashed_password2",
+      "role": "manager"
+    },
+    {
+      "first_name": "Charlie",
+      "last_name": "Brown",
+      "email": "charlie.brown@example.com",
+      "username": "charliebrown",
+      "password": "hashed_password3",
+      "role": "office assistant"
+    }
+]
