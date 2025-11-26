@@ -9,6 +9,7 @@ import (
 	"school_management_api/internal/models"
 	"school_management_api/internal/repository/sqlconnect"
 	"strconv"
+	"time"
 )
 
 func GetExecutivesHandler(w http.ResponseWriter, r *http.Request) {
@@ -210,22 +211,66 @@ func DeleteOneExecutiveHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func UpdatePasswordExecutiveHandler(w http.ResponseWriter, r *http.Request) {
-	// Implementation for updating an executive's password
+// UpdatePasswordHandler handles executive password update requests.
+func UpdatePasswordHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO:
 }
 
-func LoginExecutiveHandler(w http.ResponseWriter, r *http.Request) {
-	// Implementation for executive login
+// LoginHandler handles executive login requests.
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	var req models.Executive
+
+	// data validation
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to decode request body: %v", err), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if req.Username == "" || req.Password == "" {
+		http.Error(w, "Username and password are required", http.StatusBadRequest)
+		return
+	}
+
+	err = sqlconnect.ExecLogin(req.Username, req.Password)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// generate token
+	token := "abc"
+
+	// send token as response or as a cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "Bearer", //"exec_auth_token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		Expires:  time.Now().Add(24 * time.Hour),
+	})
+
+	// Return success response
+	w.Header().Set("Content-Type", "application/json")
+	response := struct {
+		Token string `json:"token"`
+	}{
+		Token: token,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
-func LogoutExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Implementation for executive logout
 }
 
-func ForgotPasswordExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+func ForgotPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	// Implementation for forgot password functionality
 }
 
-func ResetPasswordExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+func ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	// Implementation for resetting password functionality
 }
