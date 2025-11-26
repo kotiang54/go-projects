@@ -1,14 +1,23 @@
 package handlers
 
 import (
+	"crypto/subtle"
+	"database/sql"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"school_management_api/internal/models"
 	"school_management_api/internal/repository/sqlconnect"
+	"school_management_api/pkg/utils"
 	"strconv"
+	"strings"
+	"time"
+
+	"golang.org/x/crypto/argon2"
 )
 
 func GetExecutivesHandler(w http.ResponseWriter, r *http.Request) {
@@ -210,22 +219,124 @@ func DeleteOneExecutiveHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-func UpdatePasswordExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+func UpdatePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	// Implementation for updating an executive's password
 }
 
-func LoginExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Implementation for executive login
+	var req models.Executive
+
+	// data validation
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to decode request body: %v", err), http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if req.Username == "" || req.Password == "" {
+		http.Error(w, "Username and password are required", http.StatusBadRequest)
+		return
+	}
+
+	// search for user if exists
+	db, err := sqlconnect.ConnectDb()
+	if err != nil {
+		http.Error(w, "Database connection error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	var userExec models.Executive
+	query := "SELECT id, first_name, last_name, email, username, password, inactive_status, role FROM execs WHERE username = ?"
+	err = db.QueryRow(query, req.Username).
+		Scan(&userExec.ID, &userExec.FirstName, &userExec.LastName, &userExec.Email, &userExec.Username, &userExec.Password, &userExec.InactiveStatus, &userExec.Role)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Executive not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "database query error", http.StatusNotFound)
+		return
+	}
+
+	// is user active
+	if userExec.InactiveStatus {
+		http.Error(w, "Executive account is inactive", http.StatusForbidden)
+		return
+	}
+
+	// verify password
+	// split stored password into salt and hash
+	parts := strings.Split(userExec.Password, ".")
+	if len(parts) != 2 {
+		utils.ErrorHandler(errors.New("invalid stored password format"), "invalid encoded hash format")
+		http.Error(w, "Invalid stored password format", http.StatusForbidden)
+		return
+	}
+
+	saltBase64, hashBase64 := parts[0], parts[1]
+	salt, err := base64.StdEncoding.DecodeString(saltBase64)
+	if err != nil {
+		utils.ErrorHandler(err, "failed to decode the salt")
+		http.Error(w, "Failed to decode the salt", http.StatusForbidden)
+		return
+	}
+
+	hashedPassword, err := base64.StdEncoding.DecodeString(hashBase64)
+	if err != nil {
+		utils.ErrorHandler(err, "failed to decode the hashed password")
+		http.Error(w, "Failed to decode the hashed password", http.StatusForbidden)
+		return
+	}
+
+	hash := argon2.IDKey([]byte(req.Password), salt, 1, 64*1024, 4, 32)
+
+	if len(hash) != len(hashedPassword) {
+		utils.ErrorHandler(errors.New("incorrect password"), "password verification failed")
+		http.Error(w, "Incorrect password", http.StatusForbidden)
+		return
+	}
+
+	// constant time comparison to prevent timing attacks
+	if subtle.ConstantTimeCompare(hash, hashedPassword) != 1 {
+		utils.ErrorHandler(errors.New("incorrect password"), "password verification failed")
+		http.Error(w, "Incorrect password", http.StatusForbidden)
+		return
+	}
+
+	// generate token
+	token := "abc"
+
+	// send token as response or as a cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     "Bearer", //"exec_auth_token",
+		Value:    token,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		Expires:  time.Now().Add(24 * time.Hour),
+	})
+
+	// Return success response
+	w.Header().Set("Content-Type", "application/json")
+	response := struct {
+		Token string `json:"token"`
+	}{
+		Token: token,
+	}
+	json.NewEncoder(w).Encode(response)
 }
 
-func LogoutExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Implementation for executive logout
 }
 
-func ForgotPasswordExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+func ForgotPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	// Implementation for forgot password functionality
 }
 
-func ResetPasswordExecutiveHandler(w http.ResponseWriter, r *http.Request) {
+func ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	// Implementation for resetting password functionality
 }

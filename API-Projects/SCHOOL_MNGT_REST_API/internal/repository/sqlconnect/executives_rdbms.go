@@ -141,6 +141,7 @@ func CreateExecutives(newExecutives []models.Executive) ([]models.Executive, err
 			return nil, utils.ErrorHandler(fmt.Errorf("password is required"), "Error inserting executive data into database")
 		}
 
+		// Hash the password using Argon2id with a random salt
 		salt := make([]byte, 16)
 		if _, err := rand.Read(salt); err != nil {
 			return nil, utils.ErrorHandler(errors.New("failed to generate salt"), "Error inserting executive data into database")
