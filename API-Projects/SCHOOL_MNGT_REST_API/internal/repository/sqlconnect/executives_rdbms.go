@@ -35,7 +35,7 @@ func addExecutivesFilter(r *http.Request, query string, args []interface{}) (str
 // getExecutiveByID retrieves a executive by ID from the database
 func getExecutiveByID(db queryer, id int) (models.Executive, error) {
 	var executive models.Executive
-	query := "SELECT id, first_name, last_name, email, username, user_created_at, inactive_status, role FROM executives WHERE id = ?"
+	query := "SELECT id, first_name, last_name, email, username, user_created_at, inactive_status, role FROM execs WHERE id = ?"
 	err := db.QueryRow(query, id).
 		Scan(&executive.ID, &executive.FirstName, &executive.LastName, &executive.Email, &executive.Username, &executive.UserCreatedAt, &executive.InactiveStatus, &executive.Role)
 	return executive, err
@@ -57,13 +57,13 @@ func GetExecutivesInDb(executives []models.Executive, r *http.Request) ([]models
 	}()
 
 	// Build the SQL query with filters
-	query := "SELECT id, first_name, last_name, email, username, user_created_at, inactive_status, role FROM executives WHERE 1=1" // * id, first_name, last_name, email, class
+	query := "SELECT id, first_name, last_name, email, username, user_created_at, inactive_status, role FROM execs WHERE 1=1" // * id, first_name, last_name, email
 	var args []interface{}
 
 	// Add filters based on query parameters
 	query, args = addExecutivesFilter(r, query, args)
 
-	// Example: /executives/?sortby=last_name:asc&sortby=class:desc
+	// Example: /executives/?sortby=last_name:asc&sortby=username:desc
 	query += utils.BuildOrderByClause(r)
 
 	// Execute the query
@@ -98,7 +98,7 @@ func GetExecutiveByID(id int) (models.Executive, error) {
 	}()
 
 	var executive models.Executive
-	query := "SELECT id, first_name, last_name, email, username, user_created_at, inactive_status, role FROM executives WHERE id = ?" // id, first_name, last_name, email, class
+	query := "SELECT id, first_name, last_name, email, username, user_created_at, inactive_status, role FROM execs WHERE id = ?" // id, first_name, last_name, email, username, user_created_at, inactive_status, role
 	err = db.QueryRow(query, id).
 		Scan(&executive.ID, &executive.FirstName, &executive.LastName, &executive.Email, &executive.Username, &executive.UserCreatedAt, &executive.InactiveStatus, &executive.Role)
 
@@ -123,7 +123,7 @@ func CreateExecutives(newExecutives []models.Executive) ([]models.Executive, err
 		}
 	}()
 
-	stmt, err := db.Prepare(utils.GenerateInsertQuery(models.Executive{}, "executives"))
+	stmt, err := db.Prepare(utils.GenerateInsertQuery(models.Executive{}, "execs"))
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "Error inserting executive data into database")
 	}
@@ -216,7 +216,7 @@ func PatchExecutivesInDb(updatedFields []map[string]interface{}) ([]models.Execu
 			return executivesFromDB, fmt.Errorf("no valid fields provided for update")
 		}
 		updateArgs = append(updateArgs, executiveToUpdate.ID)
-		updateExecutiveQuery := fmt.Sprintf("UPDATE executives SET %s WHERE id = ?", strings.Join(updateFields, ", "))
+		updateExecutiveQuery := fmt.Sprintf("UPDATE execs SET %s WHERE id = ?", strings.Join(updateFields, ", "))
 
 		_, err = tx.Exec(updateExecutiveQuery, updateArgs...)
 		if err != nil {
@@ -278,7 +278,7 @@ func PatchExecutiveByID(id int, updatedFields map[string]interface{}) (models.Ex
 	}
 
 	updateArgs = append(updateArgs, executiveToUpdate.ID)
-	updateExecutiveQuery := fmt.Sprintf("UPDATE executives SET %s WHERE id = ?", strings.Join(updateFields, ", "))
+	updateExecutiveQuery := fmt.Sprintf("UPDATE execs SET %s WHERE id = ?", strings.Join(updateFields, ", "))
 
 	_, err = db.Exec(updateExecutiveQuery, updateArgs...)
 	if err != nil {
@@ -297,7 +297,7 @@ func DeleteExecutiveByID(id int) error {
 	defer db.Close()
 
 	// Delete the executive
-	result, err := db.Exec("DELETE FROM executives WHERE id = ?", id)
+	result, err := db.Exec("DELETE FROM execs WHERE id = ?", id)
 	if err != nil {
 		return utils.ErrorHandler(err, "Error deleting executive from database")
 	}
