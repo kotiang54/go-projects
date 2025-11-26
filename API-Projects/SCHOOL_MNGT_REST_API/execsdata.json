@@ -1,8 +1,8 @@
 [
   {
-    "first_name": "Jonnathan",
+    "first_name": "Jonathan",
     "last_name": "Doe",
-    "email": "jonnathan.doe@example.com",
+    "email": "jonathan.doe@example.com",
     "username": "johndoe",
     "password": "hashed_password1",
     "role": "admin"
