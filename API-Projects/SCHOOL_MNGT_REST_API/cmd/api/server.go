@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	mw "school_management_api/internal/api/middlewares"
@@ -24,7 +23,7 @@ func main() {
 
 	_, err := sqlconnect.ConnectDb()
 	if err != nil {
-		log.Fatalln("Database connection error:", err)
+		utils.ErrorHandler(err, "")
 	}
 
 	port := os.Getenv("API_PORT")
@@ -88,6 +87,6 @@ func main() {
 
 	err = server.ListenAndServeTLS(cert, key)
 	if err != nil {
-		log.Fatalln("Error starting the server:", err)
+		utils.ErrorHandler(err, "Error starting the server")
 	}
 }

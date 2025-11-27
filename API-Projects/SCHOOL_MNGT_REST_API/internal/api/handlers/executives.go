@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"school_management_api/internal/models"
 	"school_management_api/internal/repository/sqlconnect"
+	"school_management_api/pkg/utils"
 	"strconv"
 	"time"
 )
@@ -233,15 +234,31 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sqlconnect.ExecLogin(req.Username, req.Password)
+	// get user by username
+	userExec, err := sqlconnect.GetUserByUsername(req.Username)
 	if err != nil {
-		log.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to get executive user", http.StatusInternalServerError)
+		return
+	}
+
+	// is user active
+	if userExec.InactiveStatus {
+		http.Error(w, "executive account is inactive", http.StatusForbidden)
+		return
+	}
+
+	// verify password
+	if err := utils.VerifyPassword(userExec, req.Password); err != nil {
+		http.Error(w, "invalid username or password", http.StatusUnauthorized)
 		return
 	}
 
 	// generate token
-	token := "abc"
+	token, err := utils.SignToken(userExec.ID, userExec.Username, userExec.Role)
+	if err != nil {
+		http.Error(w, "failed to generate token", http.StatusInternalServerError)
+		return
+	}
 
 	// send token as response or as a cookie
 	http.SetCookie(w, &http.Cookie{

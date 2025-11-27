@@ -2,7 +2,6 @@ package sqlconnect
 
 import (
 	"crypto/rand"
-	"crypto/subtle"
 	"database/sql"
 	"encoding/base64"
 	"errors"
@@ -336,59 +335,24 @@ func DeleteExecutiveByID(id int) error {
 	return nil
 }
 
-// ExecLogin verifies executive login credentials.
-func ExecLogin(username string, password string) error {
+// GetUserByUsername retrieves a executive by their username.
+func GetUserByUsername(username string) (models.Executive, error) {
 	db, err := ConnectDb()
 	if err != nil {
-		return utils.ErrorHandler(err, "Database connection error")
+		return models.Executive{}, utils.ErrorHandler(err, "Database connection error")
 	}
 	defer db.Close()
 
 	// search for user if exists
-	var userExec models.Executive
+	var user models.Executive
 	query := "SELECT id, first_name, last_name, email, username, password, inactive_status, role FROM execs WHERE username = ?"
 	err = db.QueryRow(query, username).
-		Scan(&userExec.ID, &userExec.FirstName, &userExec.LastName, &userExec.Email, &userExec.Username, &userExec.Password, &userExec.InactiveStatus, &userExec.Role)
+		Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Username, &user.Password, &user.InactiveStatus, &user.Role)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return utils.ErrorHandler(err, "executive not found in database")
+			return models.Executive{}, utils.ErrorHandler(err, "executive not found in database")
 		}
-		return utils.ErrorHandler(err, "database query error")
+		return models.Executive{}, utils.ErrorHandler(err, "database query error")
 	}
-
-	// is user active
-	if userExec.InactiveStatus {
-		return utils.ErrorHandler(errors.New("executive account is inactive"), "executive account is inactive")
-	}
-
-	// verify password
-	// split stored password into salt and hash
-	parts := strings.Split(userExec.Password, ".")
-	if len(parts) != 2 {
-		return utils.ErrorHandler(errors.New("invalid stored password format"), "invalid encoded hash format")
-	}
-
-	saltBase64, hashBase64 := parts[0], parts[1]
-	salt, err := base64.StdEncoding.DecodeString(saltBase64)
-	if err != nil {
-		return utils.ErrorHandler(err, "failed to decode the salt")
-	}
-
-	hashedPassword, err := base64.StdEncoding.DecodeString(hashBase64)
-	if err != nil {
-		return utils.ErrorHandler(err, "failed to decode the hashed password")
-	}
-
-	hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
-
-	if len(hash) != len(hashedPassword) {
-		return utils.ErrorHandler(errors.New("incorrect password"), "password verification failed")
-	}
-
-	// constant time comparison to prevent timing attacks
-	if subtle.ConstantTimeCompare(hash, hashedPassword) != 1 {
-		return utils.ErrorHandler(errors.New("incorrect password"), "password verification failed")
-	}
-
-	return nil
+	return user, nil
 }
