@@ -233,7 +233,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sqlconnect.ExecLogin(req.Username, req.Password)
+	// verify credentials and return user token
+	token, err := sqlconnect.ExecLogin(req.Username, req.Password)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -241,7 +242,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// generate token
-	token := "abc"
+	// token := utils.SignToken()
 
 	// send token as response or as a cookie
 	http.SetCookie(w, &http.Cookie{
