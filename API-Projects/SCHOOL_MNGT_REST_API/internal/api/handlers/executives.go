@@ -268,6 +268,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   true,
 		Expires:  time.Now().Add(24 * time.Hour),
+		SameSite: http.SameSiteStrictMode,
 	})
 
 	// Return success response
@@ -281,7 +282,19 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	// Implementation for executive logout
+	// remove the jwt cookie by setting its expiration to a past time
+	http.SetCookie(w, &http.Cookie{
+		Name:     "Bearer", //"exec_auth_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		Expires:  time.Unix(0, 0),
+		SameSite: http.SameSiteStrictMode,
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"message":"Logged out successfully"}`))
 }
 
 func ForgotPasswordHandler(w http.ResponseWriter, r *http.Request) {
