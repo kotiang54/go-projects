@@ -18,7 +18,7 @@ type ContextKey string
 func JwtMiddleware(next http.Handler) http.Handler {
 	fmt.Println("JWT Middleware executed")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("Inside JWT Middleware")
+		fmt.Println("********* Inside JWT Middleware *********")
 
 		token, err := r.Cookie("Bearer")
 		if err != nil {
@@ -56,9 +56,7 @@ func JwtMiddleware(next http.Handler) http.Handler {
 		}
 
 		claims, ok := parsedToken.Claims.(jwt.MapClaims)
-		if ok {
-			fmt.Println(claims["uid"], claims["exp"], claims["role"])
-		} else {
+		if !ok {
 			http.Error(w, "Invalid Login Token", http.StatusUnauthorized)
 		}
 
@@ -67,9 +65,6 @@ func JwtMiddleware(next http.Handler) http.Handler {
 		ctx = context.WithValue(ctx, ContextKey("expiresAt"), claims["exp"])
 		ctx = context.WithValue(ctx, ContextKey("username"), claims["user"])
 
-		fmt.Println(ctx)
-
 		next.ServeHTTP(w, r.WithContext(ctx))
-		fmt.Println("Sent response from JWT Middleware")
 	})
 }
