@@ -71,6 +71,7 @@ func main() {
 	secureMux := utils.ApplyMiddlewares(router,
 		// mw.Compression,     // 6. Compression: Compress the final response
 		// mw.ResponseTime,    // 5. Response Time: Measure as much as possible
+		mw.JwtMiddleware,
 		mw.SecurityHeaders, // 4. Security Headers: Set headers for all responses
 		// rl.Middleware,      // 3. Rate Limiting: Block abusive clients early, before expensive work
 		// mw.Hpp(hppOptions), // 2. HPP: Sanitize query/body params before any logic uses them
