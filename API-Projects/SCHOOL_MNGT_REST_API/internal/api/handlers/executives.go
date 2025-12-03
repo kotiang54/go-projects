@@ -96,7 +96,7 @@ func CreateExecutivesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	// Response structure with status, count, and data
+	// Response structure with status, couhashBase64 nt, and data
 	response := struct {
 		Status string             `json:"status"`
 		Count  int                `json:"count"`
@@ -212,11 +212,6 @@ func DeleteOneExecutiveHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// UpdatePasswordHandler handles executive password update requests.
-func UpdatePasswordHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO:
-}
-
 // LoginHandler handles executive login requests.
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var req models.Executive
@@ -295,6 +290,63 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"message":"Logged out successfully"}`))
+}
+
+// UpdatePasswordHandler handles executive password update requests.
+func UpdatePasswordHandler(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	userId, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid Executive ID: %s", idStr), http.StatusBadRequest)
+		return
+	}
+
+	var req models.UpdatePasswordRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to decode request body: %v", err), http.StatusBadRequest)
+	}
+
+	defer r.Body.Close()
+
+	if req.CurrentPassword == "" || req.NewPassword == "" {
+		http.Error(w, "Current password and new password are required", http.StatusBadRequest)
+		return
+	}
+
+	// db, err := sqlconnect.ConnectDB()
+	// if err != nil {
+	// 	http.Error(w, "Failed to connect to database", http.StatusInternalServerError)
+	// 	return
+	// }
+	// defer db.Close()
+
+	userExec, err := sqlconnect.GetExecutiveByID(userId)
+	if err != nil {
+		http.Error(w, "Failed to get executive user", http.StatusInternalServerError)
+		return
+	}
+
+	// verify current password
+	if err = utils.VerifyPassword(userExec, req.CurrentPassword); err != nil {
+		http.Error(w, "Invalid current password", http.StatusUnauthorized)
+		return
+	}
+
+	// hash new password
+	hashedPassword, err := utils.HashPassword(req.NewPassword)
+	if err != nil {
+		http.Error(w, "Failed to hash new password", http.StatusInternalServerError)
+		return
+	}
+
+	// update password in database
+	err = sqlconnect.UpdateExecutivePassword(userId, hashedPassword)
+	if err != nil {
+		http.Error(w, "Failed to update password", http.StatusInternalServerError)
+		return
+	}
+
 }
 
 func ForgotPasswordHandler(w http.ResponseWriter, r *http.Request) {

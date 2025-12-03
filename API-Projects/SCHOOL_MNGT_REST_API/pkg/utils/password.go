@@ -1,14 +1,35 @@
 package utils
 
 import (
+	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"school_management_api/internal/models"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
 )
+
+// HashPassword hashes the password of the given executive using Argon2id.
+func HashPassword(password string) (string, error) {
+	if password == "" {
+		return "", ErrorHandler(fmt.Errorf("password is required"), "Error inserting executive data into database")
+	}
+
+	salt := make([]byte, 16)
+	if _, err := rand.Read(salt); err != nil {
+		return "", ErrorHandler(errors.New("failed to generate salt"), "Error inserting executive data into database")
+	}
+
+	hash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
+	saltBase64 := base64.StdEncoding.EncodeToString(salt)
+	hashBase64 := base64.StdEncoding.EncodeToString(hash)
+	encodedHash := fmt.Sprintf("%s.%s", saltBase64, hashBase64)
+
+	return encodedHash, nil
+}
 
 // VerifyPassword verifies the provided password against the stored hash.
 func VerifyPassword(user models.Executive, password string) error {

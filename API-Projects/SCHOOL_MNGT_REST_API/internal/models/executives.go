@@ -2,6 +2,7 @@ package models
 
 import "database/sql"
 
+// Executive represents an executive user in the school management system.
 type Executive struct {
 	ID                   int            `json:"id,omitempty" db:"id,omitempty"`
 	FirstName            string         `json:"first_name,omitempty" db:"first_name,omitempty"`
@@ -15,4 +16,16 @@ type Executive struct {
 	PasswordTokenExpires sql.NullString `json:"password_token_expires,omitempty" db:"password_token_expires,omitempty"`
 	InactiveStatus       bool           `json:"inactive_status,omitempty" db:"inactive_status,omitempty"`
 	Role                 string         `json:"role,omitempty" db:"role,omitempty"`
+}
+
+// UpdatePasswordRequest represents the request payload for updating an executive's password.
+type UpdatePasswordRequest struct {
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+}
+
+// UpdatePasswordResponse represents the response payload after updating an executive's password.
+type UpdatePasswordResponse struct {
+	Token           string `json:"token"`
+	PasswordUpdated bool   `json:"password_updated"`
 }

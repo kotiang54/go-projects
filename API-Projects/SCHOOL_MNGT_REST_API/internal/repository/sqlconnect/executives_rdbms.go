@@ -1,17 +1,12 @@
 package sqlconnect
 
 import (
-	"crypto/rand"
 	"database/sql"
-	"encoding/base64"
-	"errors"
 	"fmt"
 	"net/http"
 	"school_management_api/internal/models"
 	"school_management_api/pkg/utils"
 	"strings"
-
-	"golang.org/x/crypto/argon2"
 )
 
 // =========== Helper functions ===================
@@ -137,20 +132,11 @@ func CreateExecutives(newExecutives []models.Executive) ([]models.Executive, err
 	addedExecutives := make([]models.Executive, len(newExecutives))
 
 	for i, newExecutive := range newExecutives {
-		if newExecutive.Password == "" {
-			return nil, utils.ErrorHandler(fmt.Errorf("password is required"), "Error inserting executive data into database")
-		}
-
 		// Hash the password using Argon2id with a random salt
-		salt := make([]byte, 16)
-		if _, err := rand.Read(salt); err != nil {
-			return nil, utils.ErrorHandler(errors.New("failed to generate salt"), "Error inserting executive data into database")
+		encodedHash, err := utils.HashPassword(newExecutive.Password)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "Error inserting executive data into database")
 		}
-
-		hash := argon2.IDKey([]byte(newExecutive.Password), salt, 1, 64*1024, 4, 32)
-		saltBase64 := base64.StdEncoding.EncodeToString(salt)
-		hashBase64 := base64.StdEncoding.EncodeToString(hash)
-		encodedHash := fmt.Sprintf("%s.%s", saltBase64, hashBase64)
 
 		newExecutive.Password = encodedHash
 
